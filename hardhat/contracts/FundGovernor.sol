@@ -134,8 +134,7 @@ contract FundGovernor is Ownable, ReentrancyGuard {
     {
         ProposalManager.Proposal memory proposal = proposalManager.getProposal(proposalId);
         require(proposal.proposer != address(0), "Proposal not found");
-        require(proposal.status == ProposalManager.ProposalStatus.Pending, 
-                "Proposal not pending");
+        require(proposal.status == ProposalManager.ProposalStatus.Pending, "Proposal not pending");
 
         // Проверить, что кворум разрешен для этого типа
         uint8 expectedProposalType = uint8(proposal.proposeType);
