@@ -11,6 +11,12 @@ export const Proposals = ({ isActive }: { isActive: boolean }) => {
         const loadProposals = async () => {
             try {
                 setLoading(true);
+
+                if (!proposalManagerContract) {
+                    console.error("NO contract")
+                    return;
+                };
+
                 const proposalIds = await proposalManagerContract.getAllProposalIds();
 
                 const proposalsList = await Promise.all(

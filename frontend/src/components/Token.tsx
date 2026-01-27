@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAlert } from "../contexts/AlertContext";
 import { useWeb3 } from "../contexts/Web3Context";
-import { formatNumber } from "../utils";
+import { ethers } from "ethers";
 
 export const Tokens = ({ isActive }: { isActive: boolean }) => {
     const { rtkTokenContract, signer } = useWeb3();
@@ -14,14 +14,17 @@ export const Tokens = ({ isActive }: { isActive: boolean }) => {
         const calculatePrice = async () => {
             try {
                 const amount = parseFloat(buyAmount);
+
                 if (amount > 0) {
-                    const rtkAmount = (amount * 1e12).toString();
+                    const rtkAmount = amount.toString();
                     const priceWei = await rtkTokenContract.getPriceInETH(rtkAmount);
-                    setRtkPrice(formatNumber(priceWei / 1e18, 4));
+
+                    setRtkPrice(ethers.formatUnits(priceWei, 18));
                 } else {
                     setRtkPrice('0');
                 }
             } catch (error) {
+                console.error(error);
                 setRtkPrice('Error');
             }
         };
@@ -38,9 +41,10 @@ export const Tokens = ({ isActive }: { isActive: boolean }) => {
 
         try {
             setBuying(true);
-            const amount = parseFloat(buyAmount);
-            const rtkAmount = (amount * 1e12).toString();
+            const rtkAmount = buyAmount;
             const priceWei = await rtkTokenContract.getPriceInETH(rtkAmount);
+
+            console.log(rtkAmount, priceWei);
 
             const tx = await rtkTokenContract.connect(signer).purchaseTokens(rtkAmount, { value: priceWei });
 

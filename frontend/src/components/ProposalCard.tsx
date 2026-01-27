@@ -23,7 +23,7 @@ export const ProposalCard = ({ proposal }: any) => {
                     <><strong>Target:</strong> {formatAddress(proposal.targetAddress)}<br /></>
                 )}
                 {proposal.amount > 0n && (
-                    <><strong>Amount:</strong> {formatNumber(proposal.amount / 1e18, 3)} ETH<br /></>
+                    <><strong>Amount:</strong> {formatNumber(proposal.amount, 3)} ETH<br /></>
                 )}
             </div>
             {proposal.status === 1 && (

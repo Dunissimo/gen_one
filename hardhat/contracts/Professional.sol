@@ -1,22 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "./CustomERC20.sol";
 
 /**
  * @title Professional Token (PROFI)
  * @notice Системный токен DAO, НЕ передаваемый, только для голосования
- * @dev ERC20Votes для поддержки делегирования голосов
  */
-contract Professional is 
-    ERC20, 
-    ERC20Permit, 
-    ERC20Votes, 
-    Ownable
-{
+contract Professional is CustomERC20 {
     // Флаг для запрета передачи между пользователями
     mapping(address => bool) public isDAOMember;
     
@@ -26,104 +17,152 @@ contract Professional is
     event DAOMemberAdded(address indexed member, uint256 amount);
     event DAOMemberRemoved(address indexed member);
 
-    constructor() 
-        ERC20("Professional", "PROFI") 
-        ERC20Permit("Professional")
-        Ownable(msg.sender)
-    {}
+    // SNAPSHOT голосование (простая реализация)
+    struct VoteSnapshot {
+        uint256 blockNumber;
+        uint256 balance;
+    }
+
+    mapping(address => VoteSnapshot[]) private _voteSnapshots;
+    uint256 private _totalCheckpoints;
+    mapping(address => uint256) private _checkpointsCount;
+
+    constructor() CustomERC20("Professional", 12, "PROFI") {}
 
     /**
      * @notice Инициализирует систему токенов при развертывании
      * @param members Адреса участников DAO
      * @param amount Количество токенов для каждого
      */
-    function initializeDAOMembers(
-        address[] calldata members, 
-        uint256 amount
-    ) 
-        external 
-        onlyOwner 
-    {
+    function initializeDAOMembers(address[] calldata members, uint256 amount) external {
+        require(msg.sender == owner, "Only owner");
+        require(totalSupply == 0, "Already initialized");
         require(members.length > 0, "Members array is empty");
-        require(totalSupply() == 0, "Already initialized");
-        
+
         for (uint i = 0; i < members.length; i++) {
-            require(members[i] != address(0), "Invalid member address");
-            isDAOMember[members[i]] = true;
-            daoMembers.push(members[i]);
-            _mint(members[i], amount);
-            emit DAOMemberAdded(members[i], amount);
+            address member = members[i];
+            require(member != address(0), "Invalid address");
+            
+            isDAOMember[member] = true;
+            daoMembers.push(member);
+            
+            // Минт через CustomERC20
+            balances[member] += amount;
+            totalSupply += amount;
+            
+            // Snapshot для голосования
+            _writeCheckpoint(member, amount);
+            
+            emit DAOMemberAdded(member, amount);
         }
     }
 
     /**
-     * @notice Переопределение transfer - полностью ЗАПРЕЩЕН
+     * @notice transfer - ЗАПРЕЩЕН
      */
-    function transfer(address, uint256) 
-        public 
-        override(ERC20) 
-        pure 
-        returns (bool) 
-    {
-        revert("PROFI tokens are not transferable");
+    function transfer(address, uint256) public pure override returns (bool) {
+        revert("PROFI: tokens non-transferable");
     }
 
     /**
-     * @notice Переопределение transferFrom - полностью ЗАПРЕЩЕН
+     * @notice transferFrom - ЗАПРЕЩЕН  
      */
-    function transferFrom(address, address, uint256) 
-        public 
-        override(ERC20) 
-        pure 
-        returns (bool) 
-    {
-        revert("PROFI tokens are not transferable");
+    function transferFrom(address, address, uint256) public pure override returns (bool) {
+        revert("PROFI: tokens non-transferable");
     }
 
     /**
-     * @notice Получить список всех членов DAO
+     * @notice Добавить члена DAO (owner only)
+     */
+    function addDAOMember(address member, uint256 amount) external {
+        require(msg.sender == owner, "Only owner");
+        require(member != address(0), "Invalid address");
+        
+        isDAOMember[member] = true;
+        daoMembers.push(member);
+        
+        balances[member] += amount;
+        totalSupply += amount;
+        _writeCheckpoint(member, balances[member]);
+        
+        emit DAOMemberAdded(member, amount);
+    }
+
+    /**
+     * @notice Удалить члена (owner only)
+     */
+    function removeDAOMember(address member) external {
+        require(msg.sender == owner, "Only owner");
+        require(isDAOMember[member], "Not member");
+        
+        isDAOMember[member] = false;
+        
+        uint256 amount = balances[member];
+        balances[member] = 0;
+        totalSupply -= amount;
+        
+        emit DAOMemberRemoved(member);
+    }
+
+    /**
+     * @notice Получить членов DAO
      */
     function getDAOMembers() external view returns (address[] memory) {
         return daoMembers;
     }
 
     /**
-     * @notice Получить голоса (для совместимости с Governor)
+     * @notice Текущие голоса = баланс
      */
-    function getVotes(address account) 
-        public 
-        view 
-        override
-        returns (uint256) 
-    {
-        return super.getVotes(account);
+    function getVotes(address account) public view returns (uint256) {
+        return balanceOf(account);
     }
 
     /**
-     * @notice Получить голоса на конкретном блоке
+     * @notice Голоса на блоке (checkpoint)
      */
     function getPriorVotes(address account, uint256 blockNumber) 
         public 
         view 
         returns (uint256) 
     {
-        return getPastVotes(account, blockNumber);
+        uint256 checkpoints = _checkpointsCount[account];
+        if (checkpoints == 0) return 0;
+
+        // Бинарный поиск последнего snapshot <= blockNumber
+        uint256 low = 0;
+        uint256 high = checkpoints - 1;
+        
+        while (low < high) {
+            uint256 mid = (low + high) / 2;
+            VoteSnapshot storage snapshot = _voteSnapshots[account][mid];
+            
+            if (snapshot.blockNumber <= blockNumber) {
+                low = mid + 1;
+            } else {
+                high = mid;
+            }
+        }
+        
+        return _voteSnapshots[account][low - 1].balance;
     }
 
-    // Необходимые переопределения для множественного наследования
-    function _update(address from, address to, uint256 amount)
-        internal
-        override(ERC20, ERC20Votes)
-    {
-        super._update(from, to, amount);
-    }
-
-    function nonces(address owner)
-        public
-        view
-        override(ERC20Permit, Nonces)
-        returns (uint256)
-    {
-        return super.nonces(owner);
+    /**
+     * @notice Записать snapshot голосов
+     */
+    function _writeCheckpoint(address account, uint256 newBalance) private {
+        uint256 checkpoints = _checkpointsCount[account];
+        
+        if (checkpoints > 0) {
+            VoteSnapshot memory lastSnapshot = _voteSnapshots[account][checkpoints - 1];
+            
+            if (lastSnapshot.blockNumber == block.number) {
+                _voteSnapshots[account][checkpoints - 1].balance = newBalance;
+                return;
+            }
+        }
+        
+        _voteSnapshots[account].push(VoteSnapshot(block.number, newBalance));
+        _checkpointsCount[account]++;
     }
 }

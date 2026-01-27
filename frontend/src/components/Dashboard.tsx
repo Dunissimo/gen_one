@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useWeb3 } from "../contexts/Web3Context";
-import { formatNumber } from "../utils";
+import { formatNumber, formatString } from "../utils";
+import { ethers } from "ethers";
 
 export const Dashboard = () => {
     const { userAddress, governorContract, proposalManagerContract, profiTokenContract, rtkTokenContract, fundVaultContract } = useWeb3();
@@ -31,15 +32,16 @@ export const Dashboard = () => {
                     governorContract.proposalThreshold()
                 ]);
 
+
                 setStats({
                     totalProposals: allIds.length,
                     activeProposals: activeIds.length,
-                    profiBalance: formatNumber(profiBalance ),
-                    rtkBalance: formatNumber(rtkBalance),
-                    vaultBalance: formatNumber(vaultBalance, 12) + ' ETH',
-                    votingPeriod: votingPeriod.toString(),
-                    votingDelay: votingDelay.toString(),
-                    proposalThreshold: formatNumber(proposalThreshold)
+                    profiBalance: formatString(ethers.formatUnits(profiBalance, 12)),
+                    rtkBalance: formatString(ethers.formatUnits(rtkBalance, 12)),
+                    vaultBalance: formatString(ethers.formatUnits(vaultBalance, 12)) + ' ETH',
+                    votingPeriod: formatString(votingPeriod.toString()),
+                    votingDelay: formatString(votingDelay.toString()),
+                    proposalThreshold: formatString(ethers.formatUnits(proposalThreshold, 12))
                 });
             } catch (error) {
                 console.error('Dashboard error:', error);

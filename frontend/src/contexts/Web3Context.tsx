@@ -2,12 +2,19 @@ import { ethers } from "ethers";
 import { createContext, useCallback, useContext, useState } from "react";
 import { CONFIG } from "../utils";
 
-import { abi as FUND_GOVERNOR_ABI } from '../../../hardhat/artifacts/contracts/FundGovernor.sol/FundGovernor.json';
-import { abi as PROPOSAL_MANAGER_ABI } from '../../../hardhat/artifacts/contracts/ProposalManager.sol/ProposalManager.json';
-import { abi as RTK_ABI } from '../../../hardhat/artifacts/contracts/RTKCoin.sol/RTKCoin.json';
-import { abi as VOTING_SYSTEM_ABI } from '../../../hardhat/artifacts/contracts/VotingSystem.sol/VotingSystem.json';
-import { abi as FUND_VAULT_ABI } from '../../../hardhat/artifacts/contracts/FundVault.sol/FundVault.json';
-import { abi as ERC20_ABI } from '../../../hardhat/artifacts/@openzeppelin/contracts/token/ERC20/ERC20.sol/ERC20.json';
+// import { abi as FUND_GOVERNOR_ABI } from '../../../hardhat/artifacts/contracts/FundGovernor.sol/FundGovernor.json';
+// import { abi as PROPOSAL_MANAGER_ABI } from '../../../hardhat/artifacts/contracts/ProposalManager.sol/ProposalManager.json';
+// import { abi as RTK_ABI } from '../../../hardhat/artifacts/contracts/RTKCoin.sol/RTKCoin.json';
+// import { abi as VOTING_SYSTEM_ABI } from '../../../hardhat/artifacts/contracts/VotingSystem.sol/VotingSystem.json';
+// import { abi as FUND_VAULT_ABI } from '../../../hardhat/artifacts/contracts/FundVault.sol/FundVault.json';
+// import { abi as ERC20_ABI } from '../../../hardhat/artifacts/@openzeppelin/contracts/token/ERC20/ERC20.sol/ERC20.json';
+
+import { FundGovernor__factory } from '../../../hardhat/typechain-types/factories/contracts/FundGovernor__factory';
+import { ProposalManager__factory } from '../../../hardhat/typechain-types/factories/contracts/ProposalManager__factory';
+import { Professional__factory } from '../../../hardhat/typechain-types/factories/contracts/Professional__factory';
+import { RTKCoin__factory } from '../../../hardhat/typechain-types/factories/contracts/RTKCoin__factory';
+import { VotingSystem__factory } from '../../../hardhat/typechain-types/factories/contracts/VotingSystem__factory';
+import { FundVault__factory } from '../../../hardhat/typechain-types/factories/contracts/FundVault__factory';
 
 const Web3Context = createContext<any>(null);
 
@@ -38,12 +45,21 @@ export const Web3Provider = ({ children }: { children: any }) => {
             const signer = await provider.getSigner();
             const userAddress = await signer.getAddress();
 
-            const governorContract = new ethers.Contract(CONFIG.FUND_GOVERNOR, FUND_GOVERNOR_ABI, provider);
-            const proposalManagerContract = new ethers.Contract(CONFIG.PROPOSAL_MANAGER, PROPOSAL_MANAGER_ABI, provider);
-            const profiTokenContract = new ethers.Contract(CONFIG.PROFI_TOKEN, ERC20_ABI, provider);
-            const rtkTokenContract = new ethers.Contract(CONFIG.RTK_TOKEN, RTK_ABI, provider);
-            const votingSystemContract = new ethers.Contract(CONFIG.VOTING_SYSTEM, VOTING_SYSTEM_ABI, provider);
-            const fundVaultContract = new ethers.Contract(CONFIG.FUND_VAULT, FUND_VAULT_ABI, provider);
+
+
+            // const _governorContract = new ethers.Contract(CONFIG.FUND_GOVERNOR, FUND_GOVERNOR_ABI, provider);
+            // const proposalManagerContract = new ethers.Contract(CONFIG.PROPOSAL_MANAGER, PROPOSAL_MANAGER_ABI, provider);
+            // const profiTokenContract = new ethers.Contract(CONFIG.PROFI_TOKEN, ERC20_ABI, provider);
+            // const rtkTokenContract = new ethers.Contract(CONFIG.RTK_TOKEN, RTK_ABI, provider);
+            // const votingSystemContract = new ethers.Contract(CONFIG.VOTING_SYSTEM, VOTING_SYSTEM_ABI, provider);
+            // const fundVaultContract = new ethers.Contract(CONFIG.FUND_VAULT, FUND_VAULT_ABI, provider);
+            
+            const governorContract = FundGovernor__factory.connect(CONFIG.FUND_GOVERNOR, provider);
+            const proposalManagerContract = ProposalManager__factory.connect(CONFIG.PROPOSAL_MANAGER, provider);
+            const profiTokenContract = Professional__factory.connect(CONFIG.PROFI_TOKEN, provider);
+            const rtkTokenContract = RTKCoin__factory.connect(CONFIG.RTK_TOKEN, provider);
+            const votingSystemContract = VotingSystem__factory.connect(CONFIG.VOTING_SYSTEM, provider);
+            const fundVaultContract = FundVault__factory.connect(CONFIG.FUND_VAULT, provider);
 
             setState({
                 provider,

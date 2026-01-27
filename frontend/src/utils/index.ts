@@ -21,3 +21,7 @@ export const formatAddress = (addr: string) => {
 export const formatNumber = (num: number, decimals = 12) => {
     return ethers.parseUnits(String(num), decimals).toString();
 };
+
+export const formatString = (str: string) => {
+    return Intl.NumberFormat('RU-ru').format(parseFloat(str));
+}
