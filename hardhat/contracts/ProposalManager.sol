@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "hardhat/console.sol";
 
 /**
  * @title ProposalManager
  * @notice Управление жизненным циклом предложений
  */
-contract ProposalManager is Ownable {
+contract ProposalManager {
 
     // Типы предложений
     enum ProposalType {
@@ -81,7 +81,9 @@ contract ProposalManager is Ownable {
         ProposalStatus newStatus
     );
 
-    constructor() Ownable(msg.sender) {
+    address public owner;
+
+    constructor() {
         // Для типов A, B: только WeightVote
         allowedQuorumTypes[0] = new uint8[](1);
         allowedQuorumTypes[0][0] = 2;
@@ -98,6 +100,8 @@ contract ProposalManager is Ownable {
             allowedQuorumTypes[i][0] = 0;
             allowedQuorumTypes[i][1] = 1;
         }
+
+        owner = msg.sender;
     }
 
     /**
@@ -105,6 +109,7 @@ contract ProposalManager is Ownable {
      */
     function createProposal(
         ProposalType proposeType,
+        address proposer,
         address targetAddress,
         uint256 amount,
         bytes memory proposalData,
@@ -118,7 +123,7 @@ contract ProposalManager is Ownable {
         
         Proposal storage proposal = proposals[proposalId];
         proposal.proposalId = proposalId;
-        proposal.proposer = msg.sender;
+        proposal.proposer = proposer;
         proposal.proposeType = proposeType;
         proposal.createdAt = block.timestamp;
         proposal.status = ProposalStatus.Pending;
@@ -129,7 +134,7 @@ contract ProposalManager is Ownable {
         
         proposalIds.push(proposalId);
         
-        emit ProposalCreated(proposalId, msg.sender, proposeType);
+        emit ProposalCreated(proposalId, proposer, proposeType);
         
         return proposalId;
     }
@@ -137,25 +142,16 @@ contract ProposalManager is Ownable {
     /**
      * @notice Получить предложение по ID
      */
-    function getProposal(uint256 proposalId) 
-        external 
-        view 
-        returns (Proposal memory) 
-    {
+    function getProposal(uint256 proposalId) external view returns (Proposal memory) {
         require(proposals[proposalId].proposalId != 0, "Proposal not found");
+        
         return proposals[proposalId];
     }
 
     /**
      * @notice Начать голосование
      */
-    function startVoting(
-        uint256 proposalId,
-        uint8 quorumType,
-        uint256 votingPeriod
-    ) 
-        external 
-    {
+    function startVoting(uint256 proposalId, uint8 quorumType, uint256 votingPeriod) external {
         Proposal storage proposal = proposals[proposalId];
         require(proposal.status == ProposalStatus.Pending, "Not pending");
         
@@ -180,10 +176,12 @@ contract ProposalManager is Ownable {
     /**
      * @notice Отменить предложение (только создатель, до голосования)
      */
-    function cancelProposal(uint256 proposalId) 
-        external 
-    {
+    function cancelProposal(uint256 proposalId) external {
         Proposal storage proposal = proposals[proposalId];
+        
+        console.log("Proposer: ", proposal.proposer);
+        console.log("Sender: ", msg.sender);
+
         require(proposal.proposer == msg.sender, "Only proposer can cancel");
         require(proposal.status == ProposalStatus.Pending, "Can only cancel pending");
         
@@ -195,22 +193,14 @@ contract ProposalManager is Ownable {
     /**
      * @notice Получить все ID предложений
      */
-    function getAllProposalIds() 
-        external 
-        view 
-        returns (uint256[] memory) 
-    {
+    function getAllProposalIds() external view returns (uint256[] memory) {
         return proposalIds;
     }
 
     /**
      * @notice Получить активные предложения
      */
-    function getActiveProposals() 
-        external 
-        view 
-        returns (uint256[] memory) 
-    {
+    function getActiveProposals() external view returns (uint256[] memory) {
         uint256 count = 0;
         for (uint i = 0; i < proposalIds.length; i++) {
             if (proposals[proposalIds[i]].status == ProposalStatus.Active) {
@@ -227,5 +217,12 @@ contract ProposalManager is Ownable {
         }
         
         return active;
+    }
+
+    function updateVotes(uint256 proposalId, uint256 forVotes, uint256 againstVotes, uint256 abstainVotes) external {
+        Proposal storage p = proposals[proposalId];
+        p.votesFor = forVotes;
+        p.votesAgainst = againstVotes;
+        p.votesAbstain = abstainVotes;
     }
 }

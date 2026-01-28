@@ -121,11 +121,7 @@ contract Professional is CustomERC20 {
     /**
      * @notice Голоса на блоке (checkpoint)
      */
-    function getPriorVotes(address account, uint256 blockNumber) 
-        public 
-        view 
-        returns (uint256) 
-    {
+    function getPriorVotes(address account, uint256 blockNumber) public view returns (uint256) {
         uint256 checkpoints = _checkpointsCount[account];
         if (checkpoints == 0) return 0;
 

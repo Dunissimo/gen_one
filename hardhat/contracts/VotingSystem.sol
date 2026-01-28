@@ -47,11 +47,7 @@ contract VotingSystem {
      * @param profiAmount Количество PROFI
      * @return Количество голосов
      */
-    function convertProfiToVotes(uint256 profiAmount) 
-        public 
-        pure 
-        returns (uint256) 
-    {
+    function convertProfiToVotes(uint256 profiAmount) public pure returns (uint256) {
         return profiAmount / PROFI_PER_VOTE;
     }
 
@@ -60,34 +56,21 @@ contract VotingSystem {
      * @param rtkAmount Количество RTK
      * @return Количество голосов
      */
-    function convertRtkToVotes(uint256 rtkAmount) 
-        public 
-        pure 
-        returns (uint256) 
-    {
+    function convertRtkToVotes(uint256 rtkAmount) public pure returns (uint256) {
         return rtkAmount / RTK_PER_VOTE;
     }
 
     /**
      * @notice Проголосовать по предложению
      */
-    function castVote(
-        uint256 proposalId,
-        address voter,
-        uint8 support,
-        uint256 profiAmount,
-        uint256 rtkAmount
-    ) 
-        external 
-    {
+    function castVote(uint256 proposalId, address voter, uint8 support, uint256 profiAmount, uint256 rtkAmount) external {
         require(support <= 2, "Invalid support option");
         require(profiAmount > 0 || rtkAmount > 0, "No voting power");
         
         // Проверить, что еще не голосовал
         require(votes[proposalId][voter].voter == address(0), "Already voted");
 
-        uint256 totalVotingPower = convertProfiToVotes(profiAmount) + 
-                                   convertRtkToVotes(rtkAmount);
+        uint256 totalVotingPower = convertProfiToVotes(profiAmount) + convertRtkToVotes(rtkAmount);
         
         require(totalVotingPower > 0, "Insufficient voting power");
 
@@ -109,36 +92,21 @@ contract VotingSystem {
     /**
      * @notice Получить голос конкретного избирателя
      */
-    function getVote(uint256 proposalId, address voter) 
-        external 
-        view 
-        returns (Vote memory) 
-    {
+    function getVote(uint256 proposalId, address voter) external view returns (Vote memory) {
         return votes[proposalId][voter];
     }
 
     /**
      * @notice Получить всех голосующих по предложению
      */
-    function getVoters(uint256 proposalId) 
-        external 
-        view 
-        returns (address[] memory) 
-    {
+    function getVoters(uint256 proposalId) external view returns (address[] memory) {
         return votersPerProposal[proposalId];
     }
 
     /**
      * @notice Регистрировать делегирование
      */
-    function registerDelegation(
-        uint256 proposalId,
-        address delegator,
-        address delegatee,
-        uint256 rtkAmount
-    ) 
-        external 
-    {
+    function registerDelegation(uint256 proposalId, address delegator, address delegatee, uint256 rtkAmount) external {
         require(delegator != delegatee, "Cannot delegate to self");
         
         emit DelegationCreated(proposalId, delegator, delegatee, rtkAmount);

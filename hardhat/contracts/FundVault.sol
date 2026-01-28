@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /**
@@ -9,11 +8,12 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
  * @notice Хранилище ETH для венчурного фонда
  * @dev Управляется FundGovernor через одобренные proposals
  */
-contract FundVault is Ownable, ReentrancyGuard {
+contract FundVault is ReentrancyGuard {
     
     // Адрес Governor контракта (единственный, кто может инициировать платежи)
     address public governorContract;
-    
+    address public owner;
+
     // История инвестиций
     mapping(address => uint256) public startupInvestments;
     address[] public investedStartups;
@@ -25,12 +25,16 @@ contract FundVault is Ownable, ReentrancyGuard {
     event InvestmentMade(address indexed startup, uint256 amount);
     event MaxInvestmentUpdated(uint256 newMax);
 
-    constructor() Ownable(msg.sender) {}
+    constructor() {
+        owner = msg.sender;
+    }
 
     /**
      * @notice Установить адрес Governor (может вызвать только на инициализацию)
      */
-    function setGovernor(address _governor) external onlyOwner {
+    function setGovernor(address _governor) external {
+        require(msg.sender == owner, "Only owner can do this");
+
         require(_governor != address(0), "Invalid governor");
         governorContract = _governor;
     }
@@ -38,10 +42,7 @@ contract FundVault is Ownable, ReentrancyGuard {
     /**
      * @notice Инвестировать в стартап (вызывается только из Governor)
      */
-    function investInStartup(address startupAddress, uint256 amount) 
-        external 
-        nonReentrant 
-    {
+    function investInStartup(address startupAddress, uint256 amount) external nonReentrant {
         require(msg.sender == governorContract, "Only governor can invest");
         require(startupAddress != address(0), "Invalid startup address");
         require(amount > 0, "Amount must be > 0");
@@ -64,10 +65,9 @@ contract FundVault is Ownable, ReentrancyGuard {
     /**
      * @notice Обновить максимальный размер инвестиции
      */
-    function setMaxInvestment(uint256 newMax) 
-        external 
-        onlyOwner 
-    {
+    function setMaxInvestment(uint256 newMax) external {
+        require(msg.sender == owner, "Only owner can do this");
+
         maxInvestmentAmount = newMax;
         emit MaxInvestmentUpdated(newMax);
     }
@@ -75,22 +75,14 @@ contract FundVault is Ownable, ReentrancyGuard {
     /**
      * @notice Получить список всех стартапов, в которые инвестировали
      */
-    function getInvestedStartups() 
-        external 
-        view 
-        returns (address[] memory) 
-    {
+    function getInvestedStartups() external view returns (address[] memory) {
         return investedStartups;
     }
 
     /**
      * @notice Получить общий объем инвестиций в стартап
-     */
-    function getTotalInvestmentInStartup(address startup) 
-        external 
-        view 
-        returns (uint256) 
-    {
+     */ 
+    function getTotalInvestmentInStartup(address startup) external view returns (uint256) {
         return startupInvestments[startup];
     }
 

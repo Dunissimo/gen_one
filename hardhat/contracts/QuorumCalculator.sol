@@ -22,16 +22,7 @@ contract QuorumCalculator {
      * @param quorumType Тип кворума
      * @return true если предложение прошло
      */
-    function checkQuorumPassed(
-        uint256 votesFor,
-        uint256 votesAgainst,
-        uint256 votesAbstain,
-        uint8 quorumType
-    ) 
-        external 
-        pure 
-        returns (bool) 
-    {
+    function checkQuorumPassed(uint256 votesFor, uint256 votesAgainst, uint256 votesAbstain, uint8 quorumType) external pure returns (bool) {
         if (quorumType == 0) {
             // Простое большинство: 50% + 1
             return checkSimpleMajority(votesFor, votesAgainst);
@@ -48,11 +39,7 @@ contract QuorumCalculator {
     /**
      * @notice Простое большинство: 50% + 1
      */
-    function checkSimpleMajority(uint256 votesFor, uint256 votesAgainst) 
-        public 
-        pure 
-        returns (bool) 
-    {
+    function checkSimpleMajority(uint256 votesFor, uint256 votesAgainst) public pure returns (bool) {
         uint256 totalVotes = votesFor + votesAgainst;
         if (totalVotes == 0) return false;
         
@@ -63,11 +50,7 @@ contract QuorumCalculator {
     /**
      * @notice Супербольшинство: 2/3
      */
-    function checkSuperMajority(uint256 votesFor, uint256 votesAgainst) 
-        public 
-        pure 
-        returns (bool) 
-    {
+    function checkSuperMajority(uint256 votesFor, uint256 votesAgainst) public pure returns (bool) {
         uint256 totalVotes = votesFor + votesAgainst;
         if (totalVotes == 0) return false;
         
@@ -83,22 +66,14 @@ contract QuorumCalculator {
     /**
      * @notice Вес голосов: просто большинство
      */
-    function checkWeightVote(uint256 votesFor, uint256 votesAgainst) 
-        public 
-        pure 
-        returns (bool) 
-    {
+    function checkWeightVote(uint256 votesFor, uint256 votesAgainst) public pure returns (bool) {
         return votesFor > votesAgainst;
     }
 
     /**
      * @notice Получить дружественное имя типа кворума
      */
-    function getQuorumTypeName(uint8 quorumType) 
-        external 
-        pure 
-        returns (string memory) 
-    {
+    function getQuorumTypeName(uint8 quorumType) external pure returns (string memory) {
         if (quorumType == 0) return "Simple Majority (50% + 1)";
         if (quorumType == 1) return "Super Majority (2/3)";
         if (quorumType == 2) return "Weight Voting (Most votes)";

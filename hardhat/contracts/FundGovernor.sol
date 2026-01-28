@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "./Professional.sol";
 import "./RTKCoin.sol";
@@ -15,7 +14,7 @@ import "./QuorumCalculator.sol";
  * @notice Главный контракт управления венчурным фондом DAO
  * @dev Оркестрирует все компоненты системы
  */
-contract FundGovernor is Ownable, ReentrancyGuard {
+contract FundGovernor is ReentrancyGuard {
     
     // Контракты, с которыми работаем
     Professional public profiToken;
@@ -29,6 +28,8 @@ contract FundGovernor is Ownable, ReentrancyGuard {
     uint256 public votingDelay = 1;           // 1 блок
     uint256 public votingPeriod = 50_400;     // ~7 дней
     uint256 public proposalThreshold = 1e12;  // 1 PROFI
+
+    address public owner;
 
     // Отслеживание делегирования
     mapping(uint256 proposalId => mapping(address delegator => bool claimed)) 
@@ -63,7 +64,7 @@ contract FundGovernor is Ownable, ReentrancyGuard {
         address _proposalManager,
         address _votingSystem,
         address _quorumCalculator
-    ) Ownable(msg.sender) {
+    ) {
         require(_profi != address(0), "Invalid PROFI address");
         require(_rtkCoin != address(0), "Invalid RTK address");
         require(_vault != address(0), "Invalid vault address");
@@ -77,6 +78,7 @@ contract FundGovernor is Ownable, ReentrancyGuard {
         proposalManager = ProposalManager(_proposalManager);
         votingSystem = VotingSystem(_votingSystem);
         quorumCalculator = QuorumCalculator(_quorumCalculator);
+        owner = msg.sender;
     }
 
     /**
@@ -91,10 +93,7 @@ contract FundGovernor is Ownable, ReentrancyGuard {
         address targetAddress,
         uint256 amount,
         string memory description
-    ) 
-        external 
-        returns (uint256 proposalId) 
-    {
+    ) external returns (uint256 proposalId) {
         // Проверка: только участники DAO могут создавать proposals
         require(profiToken.balanceOf(msg.sender) > 0, "Not a DAO member");
         
@@ -111,6 +110,7 @@ contract FundGovernor is Ownable, ReentrancyGuard {
         // Создать proposal через ProposalManager
         proposalId = proposalManager.createProposal(
             ProposalManager.ProposalType(proposeType - 1),  // 0-indexed
+            msg.sender,
             targetAddress,
             amount,
             "",  // proposalData
@@ -125,13 +125,7 @@ contract FundGovernor is Ownable, ReentrancyGuard {
      * @param proposalId ID предложения
      * @param quorumType Тип кворума (0: SimpleM, 1: SuperM, 2: WeightVote)
      */
-    function startVoting(
-        uint256 proposalId,
-        uint8 quorumType
-    ) 
-        external 
-        nonReentrant 
-    {
+    function startVoting(uint256 proposalId, uint8 quorumType) external nonReentrant {
         ProposalManager.Proposal memory proposal = proposalManager.getProposal(proposalId);
         require(proposal.proposer != address(0), "Proposal not found");
         require(proposal.status == ProposalManager.ProposalStatus.Pending, "Proposal not pending");
@@ -159,47 +153,32 @@ contract FundGovernor is Ownable, ReentrancyGuard {
     }
 
     /**
-     * @notice Проголосовать по предложению
-     * @param proposalId ID предложения
-     * @param support 0: Against, 1: For, 2: Abstain
-     */
-    function castVote(
-        uint256 proposalId,
-        uint8 support
-    ) 
-        external 
-        nonReentrant 
-    {
+    * @notice Проголосовать по предложению указанным количеством токенов
+    * @param proposalId ID предложения
+    * @param support 0: Against, 1: For, 2: Abstain  
+    * @param profiAmount Сколько PROFI использовать для голосования
+    */
+    function castVote(uint256 proposalId, uint8 support, uint256 profiAmount) external nonReentrant {
+        // TODO: улучшить систему с токенами, сейчас они никак не резервируются
         ProposalManager.Proposal memory proposal = proposalManager.getProposal(proposalId);
-        require(proposal.status == ProposalManager.ProposalStatus.Active, 
-                "Voting not active");
+        require(proposal.status == ProposalManager.ProposalStatus.Active, "Voting not active");
         require(block.timestamp <= proposal.votingEndTime, "Voting ended");
         require(support <= 2, "Invalid support value");
+        require(profiAmount > 0, "Must specify voting amount");
 
-        // Получить баланс PROFI голосующего
-        uint256 profiBalance = profiToken.balanceOf(msg.sender);
-        require(profiBalance > 0, "No voting power");
+        uint256 availableBalance = profiToken.balanceOf(msg.sender);
+        require(profiAmount <= availableBalance, "Insufficient PROFI balance");
 
-        // Преобразовать PROFI в голоса
-        uint256 votingPower = votingSystem.convertProfiToVotes(profiBalance);
+        uint256 votingPower = votingSystem.convertProfiToVotes(profiAmount);
         
-        // Записать голос
-        votingSystem.castVote(
-            proposalId,
-            msg.sender,
-            support,
-            profiBalance,
-            0  // Нет делегированных RTK в базовом голосовании
-        );
+        votingSystem.castVote(proposalId, msg.sender, support, profiAmount, 0);
 
-        // Обновить счетчики в proposal
-        if (support == 0) {
-            proposal.votesAgainst += votingPower;
-        } else if (support == 1) {
-            proposal.votesFor += votingPower;
-        } else {
-            proposal.votesAbstain += votingPower;
-        }
+        proposalManager.updateVotes(
+            proposalId,
+            proposal.votesFor + (support == 1 ? votingPower : 0),
+            proposal.votesAgainst + (support == 0 ? votingPower : 0),
+            proposal.votesAbstain + (support == 2 ? votingPower : 0)
+        );
     }
 
     /**
@@ -208,14 +187,7 @@ contract FundGovernor is Ownable, ReentrancyGuard {
      * @param delegatee Участник DAO, которому делегируем
      * @param rtkAmount Количество RTK
      */
-    function delegateVotingPower(
-        uint256 proposalId,
-        address delegatee,
-        uint256 rtkAmount
-    ) 
-        external 
-        nonReentrant 
-    {
+    function delegateVotingPower(uint256 proposalId, address delegatee, uint256 rtkAmount) external nonReentrant {
         ProposalManager.Proposal memory proposal = proposalManager.getProposal(proposalId);
         require(proposal.status == ProposalManager.ProposalStatus.Active, 
                 "Voting not active");
@@ -247,12 +219,9 @@ contract FundGovernor is Ownable, ReentrancyGuard {
      * @notice Завершить голосование и подсчитать голоса
      * @param proposalId ID предложения
      */
-    function finalizeVote(uint256 proposalId) 
-        external 
-    {
+    function finalizeVote(uint256 proposalId) external {
         ProposalManager.Proposal memory proposal = proposalManager.getProposal(proposalId);
-        require(proposal.status == ProposalManager.ProposalStatus.Active, 
-                "Voting not active");
+        require(proposal.status == ProposalManager.ProposalStatus.Active, "Voting not active");
         require(block.timestamp > proposal.votingEndTime, "Voting still active");
 
         bool passed = quorumCalculator.checkQuorumPassed(
@@ -264,11 +233,9 @@ contract FundGovernor is Ownable, ReentrancyGuard {
 
         // Обновить статус
         if (passed) {
-            proposal.status = 
-                ProposalManager.ProposalStatus.Succeeded;
+            proposal.status = ProposalManager.ProposalStatus.Succeeded;
         } else {
-            proposal.status = 
-                ProposalManager.ProposalStatus.Defeated;
+            proposal.status = ProposalManager.ProposalStatus.Defeated;
         }
 
         emit VotesCounted(proposalId, proposal.votesFor, proposal.votesAgainst, passed);
@@ -278,13 +245,9 @@ contract FundGovernor is Ownable, ReentrancyGuard {
      * @notice Исполнить успешное предложение
      * @param proposalId ID предложения
      */
-    function executeProposal(uint256 proposalId) 
-        external 
-        nonReentrant 
-    {
+    function executeProposal(uint256 proposalId) external nonReentrant {
         ProposalManager.Proposal memory proposal = proposalManager.getProposal(proposalId);
-        require(proposal.status == ProposalManager.ProposalStatus.Succeeded, 
-                "Proposal not succeeded");
+        require(proposal.status == ProposalManager.ProposalStatus.Succeeded, "Proposal not succeeded");
         require(!proposal.executed, "Already executed");
 
         proposal.executed = true;
@@ -327,12 +290,7 @@ contract FundGovernor is Ownable, ReentrancyGuard {
     }
 
     // События
-    event VotingDelegated(
-        uint256 indexed proposalId,
-        address indexed delegator,
-        address indexed delegatee,
-        uint256 rtkAmount
-    );
+    event VotingDelegated(uint256 indexed proposalId, address indexed delegator, address indexed delegatee, uint256 rtkAmount);
 
     event ProposalExecuted(uint256 indexed proposalId);
 }

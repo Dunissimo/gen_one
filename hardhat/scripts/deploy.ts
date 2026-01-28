@@ -7,8 +7,6 @@ import * as fs from "node:fs";
 async function main() {
     const [deployer, tom, ben, rick, jack, startupA, fond] = await ethers.getSigners();
 
-
-    
     const balance = await ethers.provider.getBalance(deployer.address);
 
     console.log("Deploying contracts with account:", deployer.address);
