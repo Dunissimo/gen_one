@@ -65,12 +65,18 @@ async function main() {
 
     // 7. Fund vault
     // const fundAmount = ethers.parseEther("1000000");
-    const fundAmount = ethers.parseEther("1");
-    await deployer.sendTransaction({
-        to: await vault.getAddress(),
-        value: fundAmount
-    });
-    console.log("Vault funded with", fundAmount.toString(), "wei");
+    // const fundAmount = ethers.parseEther("1");
+
+    await ethers.provider.send("hardhat_setBalance", [
+        await vault.getAddress(), 
+        "0x" + (1000000n * 10n**18n).toString(16)
+    ]);
+
+    // await deployer.sendTransaction({
+    //     to: await vault.getAddress(),
+    //     value: fundAmount
+    // });
+    console.log("Vault funded with", await vault.getBalance(), "wei");
 
     // Save addresses
     const addresses = {

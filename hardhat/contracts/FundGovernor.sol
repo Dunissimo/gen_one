@@ -231,12 +231,7 @@ contract FundGovernor is ReentrancyGuard {
             proposal.quorumType
         );
 
-        // Обновить статус
-        if (passed) {
-            proposal.status = ProposalManager.ProposalStatus.Succeeded;
-        } else {
-            proposal.status = ProposalManager.ProposalStatus.Defeated;
-        }
+        proposalManager.finalize(proposalId, passed);
 
         emit VotesCounted(proposalId, proposal.votesFor, proposal.votesAgainst, passed);
     }

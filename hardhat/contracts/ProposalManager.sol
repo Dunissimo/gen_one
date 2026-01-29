@@ -225,4 +225,14 @@ contract ProposalManager {
         p.votesAgainst = againstVotes;
         p.votesAbstain = abstainVotes;
     }
+
+    function finalize(uint256 proposalId, bool passed) external {
+        Proposal storage p = proposals[proposalId];
+        
+        if (passed) {
+            p.status = ProposalManager.ProposalStatus.Succeeded;
+        } else {
+            p.status = ProposalManager.ProposalStatus.Defeated;
+        }
+    }
 }

@@ -1,10 +1,12 @@
-import { ethers } from "hardhat";
+
+import { ethers } from 'hardhat';
+import { time, mine } from '@nomicfoundation/hardhat-toolbox/network-helpers';
 
 import { governor, profi, proposals, quorum, rtk, vault, voting } from '../../frontend/conf.json';
 import { FundGovernor, Professional, RTKCoin } from "../typechain-types";
 
 async function main() {
-    const [deployer, tom, ben, rick, jack, startupA, fond] = await ethers.getSigners();
+    const [deployer, tom, ben, rick, jack, startupA] = await ethers.getSigners();
     const balanceTom = await ethers.provider.getBalance(tom.address);
     
     const governorContract = await ethers.getContractAt("FundGovernor", governor);
@@ -18,20 +20,33 @@ async function main() {
     // console.log("Deployer balance: ", await getETHBalance(deployer.address));
     // console.log("Tom balance: ", await getETHBalance(tom.address));
 
-    // await createProposalTypeA(governorContract, tom, startupA, "10000", "First propose");
+    // await createProposalTypeA(governorContract, tom, startupA, "1000", "First propose");
 
     // await governorContract.connect(tom).startVoting(1, 2);
 
     // await governorContract.connect(ben).castVote(1, 1, ethers.parseUnits("300", 12));
 
-    // const proposal1 = await proposalsContract.getProposal(1);
-    // console.log("Proposal: ", proposal1.votesAgainst);
-    // console.log("Proposal: ", proposal1.votesFor);
-    // console.log("Proposal: ", proposal1.votesAbstain);
+    // const proposal = await proposalsContract.getProposal(1);
+    // console.log("Proposal: ", proposal.votesAgainst);
+    // console.log("Proposal: ", proposal.votesFor);
+    // console.log("Proposal: ", proposal.votesAbstain);
     
-    
+    // await time.increaseTo(proposal.votingEndTime + 1n);
 
-    await governorContract.connect(tom).finalizeVote(1);
+    // console.log("Latest: ", await time.latest());
+    // console.log((await proposalsContract.getProposal(1)).votingEndTime);
+
+    // await governorContract.connect(tom).finalizeVote(1);
+
+    // console.log((await proposalsContract.getProposal(1)));
+
+    // console.log("Startup balance: ", await getETHBalance(startupA.address));
+    // console.log("Vault balance: ", await getETHBalance(await vaultContract.getAddress()));
+
+    // await governorContract.executeProposal(1);
+
+    // console.log("Startup balance: ", await getETHBalance(startupA.address));
+    // console.log("Vault balance: ", await getETHBalance(await vaultContract.getAddress()));
 }
 
 const createProposalTypeA = async (_governor: FundGovernor, signer: any, startup: any, eth: string, description: string) => {
