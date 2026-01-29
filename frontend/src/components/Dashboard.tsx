@@ -4,13 +4,14 @@ import { formatString } from "../utils";
 import { ethers } from "ethers";
 
 export const Dashboard = () => {
-    const { userAddress, governorContract, proposalManagerContract, profiTokenContract, rtkTokenContract, fundVaultContract } = useWeb3();
+    const { userAddress, rpcSigner, governorContract, proposalManagerContract, profiTokenContract, rtkTokenContract, fundVaultContract } = useWeb3();
     const [stats, setStats] = useState({
         totalProposals: '-',
         activeProposals: '-',
         profiBalance: '-',
         rtkBalance: '-',
         vaultBalance: '-',
+        ethBalance: '-',
         votingPeriod: '-',
         votingDelay: '-',
         proposalThreshold: '-'
@@ -21,7 +22,7 @@ export const Dashboard = () => {
             try {
                 if (!userAddress) return;
 
-                const [allIds, activeIds, profiBalance, rtkBalance, vaultBalance, votingPeriod, votingDelay, proposalThreshold] = await Promise.all([
+                const [allIds, activeIds, profiBalance, rtkBalance, vaultBalance, votingPeriod, votingDelay, proposalThreshold, ethBalance] = await Promise.all([
                     proposalManagerContract.getAllProposalIds(),
                     proposalManagerContract.getActiveProposals(),
                     profiTokenContract.balanceOf(userAddress),
@@ -29,15 +30,16 @@ export const Dashboard = () => {
                     fundVaultContract.getBalance(),
                     governorContract.votingPeriod(),
                     governorContract.votingDelay(),
-                    governorContract.proposalThreshold()
+                    governorContract.proposalThreshold(),
+                    rpcSigner.getBalance(userAddress)
                 ]);
-
-
+                
                 setStats({
                     totalProposals: allIds.length,
                     activeProposals: activeIds.length,
                     profiBalance: formatString(ethers.formatUnits(profiBalance, 12)),
                     rtkBalance: formatString(ethers.formatUnits(rtkBalance, 12)),
+                    ethBalance: formatString(ethers.formatUnits(ethBalance, 18)) + ' ETH',
                     vaultBalance: formatString(ethers.formatUnits(vaultBalance, 18)) + ' ETH',
                     votingPeriod: formatString(votingPeriod.toString()),
                     votingDelay: formatString(votingDelay.toString()),
@@ -77,6 +79,10 @@ export const Dashboard = () => {
                 <div className="stat-box">
                     <div className="stat-label">Vault Balance</div>
                     <div className="stat-value">{stats.vaultBalance}</div>
+                </div>
+                <div className="stat-box">
+                    <div className="stat-label">Your ETH Balance</div>
+                    <div className="stat-value">{stats.ethBalance}</div>
                 </div>
             </div>
 
