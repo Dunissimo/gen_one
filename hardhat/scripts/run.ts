@@ -7,7 +7,6 @@ import { FundGovernor, Professional, RTKCoin } from "../typechain-types";
 
 async function main() {
     const [deployer, tom, ben, rick, jack, startupA] = await ethers.getSigners();
-    const balanceTom = await ethers.provider.getBalance(tom.address);
     
     const governorContract = await ethers.getContractAt("FundGovernor", governor);
     const profiContract = await ethers.getContractAt("Professional", profi);
@@ -20,9 +19,10 @@ async function main() {
     // console.log("Deployer balance: ", await getETHBalance(deployer.address));
     // console.log("Tom balance: ", await getETHBalance(tom.address));
 
-    // await createProposalTypeA(governorContract, tom, startupA, "1000", "First propose");
+    // await createProposalTypeA(governorContract, tom, startupA, "1000", "Second propose");
+    // await createProposalTypeB(governorContract, tom, startupA, "1000", "Second propose");
 
-    // await governorContract.connect(tom).startVoting(1, 2);
+    // await governorContract.connect(tom).startVoting(3, 2);
 
     // await governorContract.connect(ben).castVote(1, 1, ethers.parseUnits("300", 12));
 
@@ -51,6 +51,10 @@ async function main() {
 
 const createProposalTypeA = async (_governor: FundGovernor, signer: any, startup: any, eth: string, description: string) => {
     await _governor.connect(signer).propose(1, startup.address, ethers.parseUnits(eth, 18), description);
+}
+
+const createProposalTypeB = async (_governor: FundGovernor, signer: any, startup: any, eth: string, description: string) => {
+    await _governor.connect(signer).propose(2, startup.address, ethers.parseUnits(eth, 18), description);
 }
 
 const getProfiBalance = async (_profi: Professional, address: string) => {

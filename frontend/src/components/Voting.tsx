@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useAlert } from "../contexts/AlertContext";
 import { useWeb3 } from "../contexts/Web3Context";
 import { CONFIG } from "../utils";
+import { ethers } from "ethers";
 
 export const Voting = ({ isActive }: { isActive: boolean }) => {
     const { proposalManagerContract, governorContract, rtkTokenContract, signer } = useWeb3();
@@ -43,9 +44,13 @@ export const Voting = ({ isActive }: { isActive: boolean }) => {
         }
 
         try {
-            const tx = await governorContract.connect(signer).castVote(proposalId, support);
+            
+            const tx = await governorContract.connect(signer).castVote(BigInt(proposalId), support, ethers.parseUnits("300", 12));
+            
             showAlert('Vote transaction sent...', 'info');
+
             await tx.wait();
+            
             showAlert('Vote cast successfully!', 'success');
         } catch (error: any) {
             console.error('Error casting vote:', error);
@@ -119,7 +124,7 @@ export const Voting = ({ isActive }: { isActive: boolean }) => {
                                         </div>
                                     </div>
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginTop: '15px' }}>
-                                        <button className="btn-secondary" onClick={() => castVote(proposal.proposalId, 1)}>Vote For</button>
+                                        <button className="btn-success" onClick={() => castVote(proposal.proposalId, 1)}>Vote For</button>
                                         <button className="btn-danger" onClick={() => castVote(proposal.proposalId, 0)}>Vote Against</button>
                                         <button className="btn-secondary" onClick={() => castVote(proposal.proposalId, 2)}>Abstain</button>
                                     </div>

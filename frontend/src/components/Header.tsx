@@ -3,7 +3,7 @@ import { useWeb3 } from "../contexts/Web3Context";
 import { CONFIG, formatAddress } from "../utils";
 
 export const Header = () => {
-    const { userAddress, connectWallet, isConnected } = useWeb3();
+    const { userAddress, connectWallet, isConnected, disconnectWallet } = useWeb3();
     const { showAlert } = useAlert();
 
     const handleConnect = async () => {
@@ -27,6 +27,17 @@ export const Header = () => {
                         <button className="connect-btn" onClick={handleConnect} disabled={isConnected}>
                             {isConnected ? `Connected: ${formatAddress(userAddress)}` : 'Connect Wallet'}
                         </button>
+                        {
+                            isConnected && (
+                                <button 
+                                    onClick={disconnectWallet}
+                                    className="btn-disconnect"
+                                    title="Disconnect Wallet"
+                                >
+                                    ❌
+                                </button>
+                            )
+                        }
                         <div className="account-info" style={{ marginTop: '8px' }}>
                             {isConnected && `Chain ID: ${CONFIG.NETWORK_ID}`}
                         </div>

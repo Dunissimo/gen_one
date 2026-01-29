@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useWeb3 } from "../contexts/Web3Context";
-import { formatNumber, formatString } from "../utils";
+import { formatString } from "../utils";
 import { ethers } from "ethers";
 
 export const Dashboard = () => {
@@ -38,7 +38,7 @@ export const Dashboard = () => {
                     activeProposals: activeIds.length,
                     profiBalance: formatString(ethers.formatUnits(profiBalance, 12)),
                     rtkBalance: formatString(ethers.formatUnits(rtkBalance, 12)),
-                    vaultBalance: formatString(ethers.formatUnits(vaultBalance, 12)) + ' ETH',
+                    vaultBalance: formatString(ethers.formatUnits(vaultBalance, 18)) + ' ETH',
                     votingPeriod: formatString(votingPeriod.toString()),
                     votingDelay: formatString(votingDelay.toString()),
                     proposalThreshold: formatString(ethers.formatUnits(proposalThreshold, 12))
@@ -49,7 +49,9 @@ export const Dashboard = () => {
         };
 
         updateDashboard();
+        
         const interval = setInterval(updateDashboard, 30000);
+
         return () => clearInterval(interval);
     }, [userAddress, governorContract, proposalManagerContract, profiTokenContract, rtkTokenContract, fundVaultContract]);
 

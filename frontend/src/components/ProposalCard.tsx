@@ -1,4 +1,5 @@
-import { formatAddress, formatNumber } from "../utils";
+import { ethers } from "ethers";
+import { formatAddress } from "../utils";
 
 export const ProposalCard = ({ proposal }: any) => {
     const typeNames = ['Invest New', 'Invest Existing', 'Add Member', 'Remove Member', 'Manage PROFI', 'Manage RTK'];
@@ -23,7 +24,7 @@ export const ProposalCard = ({ proposal }: any) => {
                     <><strong>Target:</strong> {formatAddress(proposal.targetAddress)}<br /></>
                 )}
                 {proposal.amount > 0n && (
-                    <><strong>Amount:</strong> {formatNumber(proposal.amount, 3)} ETH<br /></>
+                    <><strong>Amount:</strong> {ethers.formatUnits(proposal.amount, 18)} ETH<br /></>
                 )}
             </div>
             {proposal.status === 1 && (

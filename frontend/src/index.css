@@ -169,6 +169,15 @@ button:disabled {
     cursor: not-allowed;
 }
 
+.btn-success {
+    background: var(--secondary);
+}
+
+.btn-success:hover {
+    background: var(--secondary);
+    opacity: .8;
+}
+
 .btn-danger {
     background: var(--danger);
 }
