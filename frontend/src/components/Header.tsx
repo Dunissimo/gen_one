@@ -1,9 +1,9 @@
 import { useAlert } from "../contexts/AlertContext";
 import { useWeb3 } from "../contexts/Web3Context";
-import { CONFIG, formatAddress } from "../utils";
+import { CONFIG, devFastForward, formatAddress } from "../utils";
 
 export const Header = () => {
-    const { userAddress, connectWallet, isConnected, disconnectWallet } = useWeb3();
+    const { userAddress, rpcSigner, connectWallet, isConnected, disconnectWallet } = useWeb3();
     const { showAlert } = useAlert();
 
     const handleConnect = async () => {
@@ -14,7 +14,7 @@ export const Header = () => {
             showAlert('Failed to connect wallet', 'error');
         }
     };
-
+    
     return (
         <header>
             <div className="container">
@@ -22,6 +22,7 @@ export const Header = () => {
                     <div>
                         <h1>🚀 DAO Venture Fund</h1>
                         <p style={{ color: '#6b7280', fontSize: '14px' }}>Decentralized Governance & Investment</p>
+                        <button onClick={() => devFastForward(rpcSigner, 604800)}>Skip 1 week</button>
                     </div>
                     <div style={{ textAlign: 'right' }}>
                         <button className="connect-btn" onClick={handleConnect} disabled={isConnected}>

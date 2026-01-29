@@ -44,8 +44,6 @@ export const Tokens = ({ isActive }: { isActive: boolean }) => {
             const rtkAmount = buyAmount;
             const priceWei = await rtkTokenContract.getPriceInETH(rtkAmount);
 
-            console.log(rtkAmount, priceWei);
-
             const tx = await rtkTokenContract.connect(signer).purchaseTokens(rtkAmount, { value: priceWei });
 
             showAlert('Purchase transaction sent...', 'info');

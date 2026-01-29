@@ -25,3 +25,14 @@ export const formatNumber = (num: number, decimals = 12) => {
 export const formatString = (str: string) => {
     return Intl.NumberFormat('RU-ru').format(parseFloat(str));
 }
+
+export async function devFastForward(provider: any, seconds: number) {
+    try {
+        await provider.send("evm_increaseTime", [seconds]);
+        await provider.send("evm_mine", []);
+        
+        console.log(`⏰ Time +${seconds}s`);
+    } catch (e: any) {
+        console.warn("Time control только для Hardhat localhost:", e.message);
+    }
+}

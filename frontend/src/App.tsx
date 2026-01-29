@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Header } from "./components/Header";
 import { AlertContainer } from "./components/Alert";
 import { TabNav } from "./components/TabNav";
@@ -10,10 +10,6 @@ import { Tokens } from "./components/Token";
 
 export const App = () => {
     const [activeTab, setActiveTab] = useState('dashboard');
-
-    useEffect(() => {
-        console.log(activeTab);
-    }, [activeTab]);
 
     return (
         <>

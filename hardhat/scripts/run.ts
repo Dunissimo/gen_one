@@ -36,9 +36,10 @@ async function main() {
     // console.log("Latest: ", await time.latest());
     // console.log((await proposalsContract.getProposal(1)).votingEndTime);
 
-    // await governorContract.connect(tom).finalizeVote(1);
+    // console.log(await proposalsContract.getAllProposalIds());
+    // await governorContract.connect(tom).finalizeVote(3);
 
-    // console.log((await proposalsContract.getProposal(1)));
+    console.log((await proposalsContract.getProposal(3)).status);
 
     // console.log("Startup balance: ", await getETHBalance(startupA.address));
     // console.log("Vault balance: ", await getETHBalance(await vaultContract.getAddress()));

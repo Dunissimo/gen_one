@@ -14,6 +14,7 @@ const Web3Context = createContext<any>(null);
 const initialState = {
     provider: null,
     signer: null,
+    rpcSigner: null,
     userAddress: null,
     governorContract: null,
     proposalManagerContract: null,
@@ -39,6 +40,7 @@ export const Web3Provider = ({ children }: { children: any }) => {
             
             const signer = await provider.getSigner();
             const userAddress = await signer.getAddress();
+            const rpcProvider = new ethers.JsonRpcProvider("http://127.0.0.1:8545");
 
             const governorContract = FundGovernor__factory.connect(CONFIG.FUND_GOVERNOR, provider);
             const proposalManagerContract = ProposalManager__factory.connect(CONFIG.PROPOSAL_MANAGER, provider);
@@ -50,6 +52,7 @@ export const Web3Provider = ({ children }: { children: any }) => {
             setState({
                 provider,
                 signer,
+                rpcSigner: rpcProvider,
                 userAddress,
                 governorContract,
                 proposalManagerContract,
