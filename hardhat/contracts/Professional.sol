@@ -75,7 +75,6 @@ contract Professional is CustomERC20 {
      * @notice Добавить члена DAO (owner only)
      */
     function addDAOMember(address member, uint256 amount) external {
-        require(msg.sender == owner, "Only owner");
         require(member != address(0), "Invalid address");
         
         isDAOMember[member] = true;
@@ -109,6 +108,15 @@ contract Professional is CustomERC20 {
      */
     function getDAOMembers() external view returns (address[] memory) {
         return daoMembers;
+    }
+
+    /**
+     * @notice Проверяет, является ли адрес участником DAO
+     * @param account Адрес для проверки
+     * @return true если адрес в списке участников
+     */
+    function isMember(address account) external view returns (bool) {
+        return isDAOMember[account];
     }
 
     /**

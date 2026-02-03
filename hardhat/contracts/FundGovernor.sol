@@ -138,8 +138,7 @@ contract FundGovernor is ReentrancyGuard {
             require(quorumType == 2, "Investment proposals need WeightVote");
         } else {
             // Типы C, D, E, F: SimpleM или SuperM
-            require(quorumType == 0 || quorumType == 1, 
-                    "Management proposals need SimpleM or SuperM");
+            require(quorumType == 0 || quorumType == 1, "Management proposals need SimpleM or SuperM");
         }
 
         // Запустить голосование
@@ -248,23 +247,22 @@ contract FundGovernor is ReentrancyGuard {
         proposal.executed = true;
 
         // Выполнить в зависимости от типа
+
+        // Тип A: инвестировать в новый стартап
         if (proposal.proposeType == ProposalManager.ProposalType.INVEST_NEW_STARTUP) {
-            // Тип A: инвестировать в новый стартап
             fundVault.investInStartup(proposal.targetAddress, proposal.amount);
         } 
+        // Тип B: доинвестировать
         else if (proposal.proposeType == ProposalManager.ProposalType.INVEST_EXISTING_STARTUP) {
-            // Тип B: доинвестировать
             fundVault.investInStartup(proposal.targetAddress, proposal.amount);
         }
+        // Тип C: добавить участника
         else if (proposal.proposeType == ProposalManager.ProposalType.ADD_MEMBER) {
-            // Тип C: добавить участника
-            // Выдать PROFI токены
-            // (нужна mint функция в Professional)
             uint256 memberAllocation = 25_000 * 10**12;
-            // profiToken.mint(proposal.targetAddress, memberAllocation);
+            profiToken.addDAOMember(proposal.targetAddress, memberAllocation);
         }
+        // Тип D: исключить участника
         else if (proposal.proposeType == ProposalManager.ProposalType.REMOVE_MEMBER) {
-            // Тип D: исключить участника
             // Сжечь PROFI
             // (нужна burn функция)
         }

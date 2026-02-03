@@ -3,7 +3,7 @@ import { ethers } from 'hardhat';
 import { time, mine } from '@nomicfoundation/hardhat-toolbox/network-helpers';
 
 import { governor, profi, proposals, quorum, rtk, vault, voting } from '../../frontend/conf.json';
-import { FundGovernor, Professional, RTKCoin } from "../typechain-types";
+import { FundGovernor, FundVault, Professional, ProposalManager, RTKCoin } from "../typechain-types";
 
 async function main() {
     const [deployer, tom, ben, rick, jack, startupA] = await ethers.getSigners();
@@ -15,39 +15,72 @@ async function main() {
     const rtkContract = await ethers.getContractAt("RTKCoin", rtk);
     const vaultContract = await ethers.getContractAt("FundVault", vault);
     const votingContract = await ethers.getContractAt("VotingSystem", voting);
- 
-    // console.log("Deployer balance: ", await getETHBalance(deployer.address));
-    // console.log("Tom balance: ", await getETHBalance(tom.address));
 
-    // await createProposalTypeA(governorContract, tom, startupA, "1000", "Second propose");
-    // await createProposalTypeB(governorContract, tom, startupA, "1000", "Second propose");
+    // await checkFirst(governorContract, proposalsContract, vaultContract, tom, ben, startupA);
 
-    // await governorContract.connect(tom).startVoting(3, 2);
+    await checkTwo(governorContract, proposalsContract, profiContract, tom, jack);
+}
 
-    // await governorContract.connect(ben).castVote(1, 1, ethers.parseUnits("300", 12));
+const checkFirst = async (_governor: FundGovernor, _proposal: ProposalManager, _vault: FundVault, tom: any, ben: any, startup: any) => {
+    await createProposalTypeA(_governor, tom, startup, "1000", "Second propose");
+    await createProposalTypeB(_governor, tom, startup, "1000", "Second propose");
 
-    // const proposal = await proposalsContract.getProposal(1);
-    // console.log("Proposal: ", proposal.votesAgainst);
-    // console.log("Proposal: ", proposal.votesFor);
-    // console.log("Proposal: ", proposal.votesAbstain);
+    await _governor.connect(tom).startVoting(3, 2);
+
+    await _governor.connect(ben).castVote(1, 1, ethers.parseUnits("300", 12));
+
+    const proposal = await _proposal.getProposal(1);
+    console.log("Proposal against: ", proposal.votesAgainst);
+    console.log("Proposal for: ", proposal.votesFor);
+    console.log("Proposal abstain: ", proposal.votesAbstain);
     
-    // await time.increaseTo(proposal.votingEndTime + 1n);
+    await time.increaseTo(proposal.votingEndTime + 1n);
 
-    // console.log("Latest: ", await time.latest());
-    // console.log((await proposalsContract.getProposal(1)).votingEndTime);
+    console.log("Latest: ", await time.latest());
+    console.log((await _proposal.getProposal(1)).votingEndTime);
 
-    // console.log(await proposalsContract.getAllProposalIds());
-    // await governorContract.connect(tom).finalizeVote(3);
+    console.log(await _proposal.getAllProposalIds());
+    await _governor.connect(tom).finalizeVote(3);
 
-    console.log((await proposalsContract.getProposal(3)).status);
+    console.log((await _proposal.getProposal(3)).status);
 
-    // console.log("Startup balance: ", await getETHBalance(startupA.address));
-    // console.log("Vault balance: ", await getETHBalance(await vaultContract.getAddress()));
+    console.log("Startup balance: ", await getETHBalance(startup.address));
+    console.log("Vault balance: ", await getETHBalance(await _vault.getAddress()));
 
-    // await governorContract.executeProposal(1);
+    await _governor.executeProposal(1);
 
-    // console.log("Startup balance: ", await getETHBalance(startupA.address));
-    // console.log("Vault balance: ", await getETHBalance(await vaultContract.getAddress()));
+    console.log("Startup balance: ", await getETHBalance(startup.address));
+    console.log("Vault balance: ", await getETHBalance(await _vault.getAddress()));
+}
+
+const checkTwo = async (_governor: FundGovernor, _proposal: ProposalManager, _profi: Professional, tom: any, jack: any) => {
+    await createProposalTypeC(_governor, tom, jack, "Add member propose");
+
+    await _governor.connect(tom).startVoting(1, 0);
+
+    await _governor.connect(tom).castVote(1, 1, ethers.parseUnits("300", 12));
+
+    const proposal = await _proposal.getProposal(1);
+    console.log("Proposal against: ", proposal.votesAgainst);
+    console.log("Proposal for: ", proposal.votesFor);
+    console.log("Proposal abstain: ", proposal.votesAbstain);
+
+    await time.increaseTo(proposal.votingEndTime + 1n);
+
+    console.log("Latest: ", await time.latest());
+    console.log((await _proposal.getProposal(1)).votingEndTime);
+
+    await _governor.connect(tom).finalizeVote(1);
+
+    console.log((await _proposal.getProposal(1)).status);
+
+    console.log((await _profi.isMember(jack.address)) ? "Jack is a member" : "Jack isnt a member");
+
+    await _governor.executeProposal(1);
+
+    console.log((await _profi.balanceOf(jack.address)));
+    
+    console.log((await _profi.isMember(jack.address)) ? "Jack is a member" : "Jack isnt a member");
 }
 
 const createProposalTypeA = async (_governor: FundGovernor, signer: any, startup: any, eth: string, description: string) => {
@@ -56,6 +89,10 @@ const createProposalTypeA = async (_governor: FundGovernor, signer: any, startup
 
 const createProposalTypeB = async (_governor: FundGovernor, signer: any, startup: any, eth: string, description: string) => {
     await _governor.connect(signer).propose(2, startup.address, ethers.parseUnits(eth, 18), description);
+}
+
+const createProposalTypeC = async (_governor: FundGovernor, signer: any, futureMember: any, description: string) => {
+    await _governor.connect(signer).propose(3, futureMember.address, 0, description);
 }
 
 const getProfiBalance = async (_profi: Professional, address: string) => {
