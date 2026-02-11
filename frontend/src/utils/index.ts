@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ethers } from 'ethers';
 import { governor, profi, proposals, quorum, rtk, vault, voting } from '../../conf.json';
 

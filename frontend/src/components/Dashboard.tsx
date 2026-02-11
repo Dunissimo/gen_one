@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useWeb3 } from "../contexts/Web3Context";
+import { useWeb3 } from "../hooks/useWeb3";
 import { formatString } from "../utils";
 import { ethers } from "ethers";
 
@@ -23,20 +23,20 @@ export const Dashboard = () => {
                 if (!userAddress) return;
 
                 const [allIds, activeIds, profiBalance, rtkBalance, vaultBalance, votingPeriod, votingDelay, proposalThreshold, ethBalance] = await Promise.all([
-                    proposalManagerContract.getAllProposalIds(),
-                    proposalManagerContract.getActiveProposals(),
-                    profiTokenContract.balanceOf(userAddress),
-                    rtkTokenContract.balanceOf(userAddress),
-                    fundVaultContract.getBalance(),
-                    governorContract.votingPeriod(),
-                    governorContract.votingDelay(),
-                    governorContract.proposalThreshold(),
-                    rpcSigner.getBalance(userAddress)
+                    proposalManagerContract!.getAllProposalIds(),
+                    proposalManagerContract!.getActiveProposals(),
+                    profiTokenContract!.balanceOf(userAddress),
+                    rtkTokenContract!.balanceOf(userAddress),
+                    fundVaultContract!.getBalance(),
+                    governorContract!.votingPeriod(),
+                    governorContract!.votingDelay(),
+                    governorContract!.proposalThreshold(),
+                    rpcSigner!.getBalance(userAddress)
                 ]);
                 
                 setStats({
-                    totalProposals: allIds.length,
-                    activeProposals: activeIds.length,
+                    totalProposals: String(allIds.length),
+                    activeProposals: String(activeIds.length),
                     profiBalance: formatString(ethers.formatUnits(profiBalance, 12)),
                     rtkBalance: formatString(ethers.formatUnits(rtkBalance, 12)),
                     ethBalance: formatString(ethers.formatUnits(ethBalance, 18)) + ' ETH',

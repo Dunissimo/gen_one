@@ -1,8 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
-import { useAlert } from "../contexts/AlertContext";
-import { useWeb3 } from "../contexts/Web3Context";
 import { CONFIG } from "../utils";
 import { ethers } from "ethers";
+import { useAlert } from "../hooks/useAlert";
+import { useWeb3 } from "../hooks/useWeb3";
 
 export const Voting = ({ isActive }: { isActive: boolean }) => {
     const { proposalManagerContract, governorContract, rtkTokenContract, signer } = useWeb3();
@@ -22,9 +23,9 @@ export const Voting = ({ isActive }: { isActive: boolean }) => {
         const loadVotingProposals = async () => {
             try {
                 setLoading(true);
-                const proposalIds = await proposalManagerContract.getActiveProposals();
+                const proposalIds = await proposalManagerContract!.getActiveProposals();
                 const proposals = await Promise.all(
-                    proposalIds.map((id: number) => proposalManagerContract.getProposal(id))
+                    proposalIds.map((id: bigint) => proposalManagerContract!.getProposal(id))
                 );
                 setActiveProposals(proposals);
             } catch (error) {
@@ -45,7 +46,7 @@ export const Voting = ({ isActive }: { isActive: boolean }) => {
 
         try {
             
-            const tx = await governorContract.connect(signer).castVote(BigInt(proposalId), support, ethers.parseUnits("300", 12));
+            const tx = await governorContract!.connect(signer).castVote(BigInt(proposalId), support, ethers.parseUnits("300", 12));
             
             showAlert('Vote transaction sent...', 'info');
 
@@ -54,7 +55,7 @@ export const Voting = ({ isActive }: { isActive: boolean }) => {
             showAlert('Vote cast successfully!', 'success');
         } catch (error: any) {
             console.error('Error casting vote:', error);
-            showAlert(error.message, 'error');
+            showAlert(error.reason, 'error');
         }
     };
 
@@ -73,10 +74,10 @@ export const Voting = ({ isActive }: { isActive: boolean }) => {
             setDelegating(true);
             const rtkAmount = (parseFloat(delegateData.rtkAmount) * 1e12).toString();
 
-            const approveTx = await rtkTokenContract.connect(signer).approve(CONFIG.FUND_GOVERNOR, rtkAmount);
+            const approveTx = await rtkTokenContract!.connect(signer).approve(CONFIG.FUND_GOVERNOR, rtkAmount);
             await approveTx.wait();
 
-            const tx = await governorContract.connect(signer).delegateVotingPower(
+            const tx = await governorContract!.connect(signer).delegateVotingPower(
                 delegateData.proposalId,
                 delegateData.delegateeAddress,
                 rtkAmount
@@ -89,7 +90,7 @@ export const Voting = ({ isActive }: { isActive: boolean }) => {
             setDelegateData({ proposalId: '', rtkAmount: '', delegateeAddress: '' });
         } catch (error: any) {
             console.error('Error delegating:', error);
-            showAlert(error.message, 'error');
+            showAlert(error.reason, 'error');
         } finally {
             setDelegating(false);
         }

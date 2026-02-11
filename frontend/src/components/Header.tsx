@@ -1,5 +1,5 @@
-import { useAlert } from "../contexts/AlertContext";
-import { useWeb3 } from "../contexts/Web3Context";
+import { useAlert } from "../hooks/useAlert";
+import { useWeb3 } from "../hooks/useWeb3";
 import { CONFIG, devFastForward, formatAddress } from "../utils";
 
 export const Header = () => {
@@ -7,7 +7,7 @@ export const Header = () => {
     const { showAlert } = useAlert();
 
     const handleConnect = async () => {
-        const success = await connectWallet();
+        const success = await connectWallet!();
         if (success) {
             showAlert('Wallet connected successfully!', 'success');
         } else {
@@ -26,12 +26,12 @@ export const Header = () => {
                     </div>
                     <div style={{ textAlign: 'right' }}>
                         <button className="connect-btn" onClick={handleConnect} disabled={isConnected}>
-                            {isConnected ? `Connected: ${formatAddress(userAddress)}` : 'Connect Wallet'}
+                            {isConnected ? `Connected: ${formatAddress(userAddress!)}` : 'Connect Wallet'}
                         </button>
                         {
                             isConnected && (
                                 <button 
-                                    onClick={disconnectWallet}
+                                    onClick={disconnectWallet!}
                                     className="btn-disconnect"
                                     title="Disconnect Wallet"
                                 >

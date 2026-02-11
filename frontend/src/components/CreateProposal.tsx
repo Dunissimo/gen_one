@@ -1,6 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
-import { useAlert } from "../contexts/AlertContext";
-import { useWeb3 } from "../contexts/Web3Context";
+import { ethers } from "ethers";
+import { useWeb3 } from "../hooks/useWeb3";
+import { useAlert } from "../hooks/useAlert";
 
 export const CreateProposal = ({ isActive }: { isActive: boolean }) => {
     const { signer, governorContract } = useWeb3();
@@ -30,9 +32,9 @@ export const CreateProposal = ({ isActive }: { isActive: boolean }) => {
         try {
             setLoading(true);
             const proposeType = parseInt(formData.proposeType);
-            const amount = formData.investAmount ? (parseFloat(formData.investAmount) * 1e18).toString() : '0';
+            const amount = formData.investAmount ? (ethers.parseEther(formData.investAmount)).toString() : '0';
 
-            const tx = await governorContract.connect(signer).propose(
+            const tx = await governorContract!.connect(signer).propose(
                 proposeType,
                 formData.targetAddress,
                 amount,
@@ -44,9 +46,11 @@ export const CreateProposal = ({ isActive }: { isActive: boolean }) => {
             showAlert('Proposal created successfully!', 'success');
 
             setFormData({ proposeType: '', targetAddress: '', investAmount: '', description: '' });
-        } catch (error: any) {
+        } catch (error) {
+            console.dir(error);
+            
             console.error('Error creating proposal:', error);
-            showAlert(error.message, 'error');
+            showAlert(error.reason, 'error');
         } finally {
             setLoading(false);
         }

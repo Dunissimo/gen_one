@@ -18,9 +18,6 @@ contract FundVault is ReentrancyGuard {
     mapping(address => uint256) public startupInvestments;
     address[] public investedStartups;
     
-    // Ограничение на одну инвестицию
-    uint256 public maxInvestmentAmount = 10_000 ether;
-
     event FundsReceived(address indexed from, uint256 amount);
     event InvestmentMade(address indexed startup, uint256 amount);
     event MaxInvestmentUpdated(uint256 newMax);
@@ -46,7 +43,6 @@ contract FundVault is ReentrancyGuard {
         require(msg.sender == governorContract, "Only governor can invest");
         require(startupAddress != address(0), "Invalid startup address");
         require(amount > 0, "Amount must be > 0");
-        require(amount <= maxInvestmentAmount, "Amount exceeds maximum");
         require(address(this).balance >= amount, "Insufficient balance");
 
         // Отправить средства стартапу
@@ -60,16 +56,6 @@ contract FundVault is ReentrancyGuard {
         startupInvestments[startupAddress] += amount;
 
         emit InvestmentMade(startupAddress, amount);
-    }
-
-    /**
-     * @notice Обновить максимальный размер инвестиции
-     */
-    function setMaxInvestment(uint256 newMax) external {
-        require(msg.sender == owner, "Only owner can do this");
-
-        maxInvestmentAmount = newMax;
-        emit MaxInvestmentUpdated(newMax);
     }
 
     /**

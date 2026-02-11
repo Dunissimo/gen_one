@@ -1,4 +1,6 @@
-import { useAlert } from "../contexts/AlertContext";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+import { useAlert } from "../hooks/useAlert";
 
 export const Alert = ({ message, type }: { message: string, type: string }) => (
     <div className={`alert alert-${type}`}>

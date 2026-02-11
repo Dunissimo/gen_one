@@ -1,8 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
-import { useWeb3 } from "../contexts/Web3Context";
 import { ProposalCard } from "./ProposalCard";
+import { useWeb3 } from "../hooks/useWeb3";
 
-export const Proposals = ({ isActive }: { isActive: boolean }) => {
+export const Proposals = () => {
     const { proposalManagerContract } = useWeb3();
     const [proposals, setProposals] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);

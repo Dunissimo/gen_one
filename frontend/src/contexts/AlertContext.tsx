@@ -1,6 +1,7 @@
-import { createContext, useCallback, useContext, useState } from "react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useCallback, useState } from "react";
+import { AlertContext } from "../hooks/useAlert";
 
-const AlertContext = createContext<any>(null);
 
 export const AlertProvider = ({ children }: { children: any }) => {
     const [alerts, setAlerts] = useState<any[]>([]);
@@ -18,12 +19,4 @@ export const AlertProvider = ({ children }: { children: any }) => {
             {children}
         </AlertContext.Provider>
     );
-};
-
-export const useAlert = () => {
-    const context = useContext(AlertContext);
-
-    if (!context) throw new Error('useAlert must be used within AlertProvider');
-
-    return context;
 };

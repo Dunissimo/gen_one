@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
-import { useAlert } from "../contexts/AlertContext";
-import { useWeb3 } from "../contexts/Web3Context";
 import { ethers } from "ethers";
+import { useWeb3 } from "../hooks/useWeb3";
+import { useAlert } from "../hooks/useAlert";
 
 export const Tokens = ({ isActive }: { isActive: boolean }) => {
     const { rtkTokenContract, signer } = useWeb3();
@@ -17,7 +18,7 @@ export const Tokens = ({ isActive }: { isActive: boolean }) => {
 
                 if (amount > 0) {
                     const rtkAmount = amount.toString();
-                    const priceWei = await rtkTokenContract.getPriceInETH(rtkAmount);
+                    const priceWei = await rtkTokenContract!.getPriceInETH(rtkAmount);
 
                     setRtkPrice(ethers.formatUnits(priceWei, 18));
                 } else {
@@ -42,9 +43,9 @@ export const Tokens = ({ isActive }: { isActive: boolean }) => {
         try {
             setBuying(true);
             const rtkAmount = buyAmount;
-            const priceWei = await rtkTokenContract.getPriceInETH(rtkAmount);
+            const priceWei = await rtkTokenContract!.getPriceInETH(rtkAmount);
 
-            const tx = await rtkTokenContract.connect(signer).purchaseTokens(rtkAmount, { value: priceWei });
+            const tx = await rtkTokenContract!.connect(signer).purchaseTokens(rtkAmount, { value: priceWei });
 
             showAlert('Purchase transaction sent...', 'info');
             await tx.wait();
@@ -53,7 +54,7 @@ export const Tokens = ({ isActive }: { isActive: boolean }) => {
             setBuyAmount('');
         } catch (error: any) {
             console.error('Error buying RTK:', error);
-            showAlert(error.message, 'error');
+            showAlert(error.reason, 'error');
         } finally {
             setBuying(false);
         }

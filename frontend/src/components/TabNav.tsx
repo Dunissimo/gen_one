@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const TabNav = ({ activeTab, setActiveTab }: any) => {
     const tabs = ['dashboard', 'proposals', 'create', 'voting', 'tokens'];
     const labels = ['Dashboard', 'Proposals', 'Create Proposal', 'Vote', 'Tokens'];

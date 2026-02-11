@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ethers } from "ethers";
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { CONFIG } from "../utils";
 
 import { FundGovernor__factory } from '../../../hardhat/typechain-types/factories/contracts/FundGovernor__factory';
@@ -8,10 +9,31 @@ import { Professional__factory } from '../../../hardhat/typechain-types/factorie
 import { RTKCoin__factory } from '../../../hardhat/typechain-types/factories/contracts/RTKCoin__factory';
 import { VotingSystem__factory } from '../../../hardhat/typechain-types/factories/contracts/VotingSystem__factory';
 import { FundVault__factory } from '../../../hardhat/typechain-types/factories/contracts/FundVault__factory';
+import type { FundGovernor } from "../../../hardhat/typechain-types/contracts/FundGovernor";
+import type { ProposalManager } from "../../../hardhat/typechain-types/contracts/ProposalManager";
+import type { Professional } from "../../../hardhat/typechain-types/contracts/Professional";
+import type { RTKCoin } from "../../../hardhat/typechain-types/contracts/RTKCoin";
+import type { VotingSystem } from "../../../hardhat/typechain-types/contracts/VotingSystem";
+import type { FundVault } from "../../../hardhat/typechain-types/contracts/FundVault";
+import { Web3Context } from "../hooks/useWeb3";
 
-const Web3Context = createContext<any>(null);
+export interface IState {
+    provider: ethers.BrowserProvider | null,
+    signer: ethers.JsonRpcSigner | null,
+    rpcSigner: ethers.JsonRpcProvider | null,
+    userAddress: string | null,
+    governorContract: FundGovernor | null,
+    proposalManagerContract: ProposalManager | null,
+    profiTokenContract: Professional | null,
+    rtkTokenContract: RTKCoin | null,
+    votingSystemContract: VotingSystem | null,
+    fundVaultContract: FundVault | null,
+    isConnected: boolean,
+    connectWallet: (() => Promise<boolean>) | null,
+    disconnectWallet: (() => Promise<void>) | null,
+}
 
-const initialState = {
+const initialState: IState = {
     provider: null,
     signer: null,
     rpcSigner: null,
@@ -22,7 +44,9 @@ const initialState = {
     rtkTokenContract: null,
     votingSystemContract: null,
     fundVaultContract: null,
-    isConnected: false
+    isConnected: false,
+    connectWallet: null,
+    disconnectWallet: null
 };
 
 export const Web3Provider = ({ children }: { children: any }) => {
@@ -42,12 +66,12 @@ export const Web3Provider = ({ children }: { children: any }) => {
             const userAddress = await signer.getAddress();
             const rpcProvider = new ethers.JsonRpcProvider("http://127.0.0.1:8545");
 
-            const governorContract = FundGovernor__factory.connect(CONFIG.FUND_GOVERNOR, provider);
-            const proposalManagerContract = ProposalManager__factory.connect(CONFIG.PROPOSAL_MANAGER, provider);
-            const profiTokenContract = Professional__factory.connect(CONFIG.PROFI_TOKEN, provider);
-            const rtkTokenContract = RTKCoin__factory.connect(CONFIG.RTK_TOKEN, provider);
-            const votingSystemContract = VotingSystem__factory.connect(CONFIG.VOTING_SYSTEM, provider);
-            const fundVaultContract = FundVault__factory.connect(CONFIG.FUND_VAULT, provider);
+            const governorContract = FundGovernor__factory.connect(CONFIG.FUND_GOVERNOR, signer);
+            const proposalManagerContract = ProposalManager__factory.connect(CONFIG.PROPOSAL_MANAGER, signer);
+            const profiTokenContract = Professional__factory.connect(CONFIG.PROFI_TOKEN, signer);
+            const rtkTokenContract = RTKCoin__factory.connect(CONFIG.RTK_TOKEN, signer);
+            const votingSystemContract = VotingSystem__factory.connect(CONFIG.VOTING_SYSTEM, signer);
+            const fundVaultContract = FundVault__factory.connect(CONFIG.FUND_VAULT, signer);
 
             setState({
                 provider,
@@ -145,10 +169,3 @@ export const Web3Provider = ({ children }: { children: any }) => {
     );
 };
 
-export const useWeb3 = () => {
-    const context = useContext(Web3Context);
-    
-    if (!context) throw new Error('useWeb3 must be used within Web3Provider');
-    
-    return context;
-};
