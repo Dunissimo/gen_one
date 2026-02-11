@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
 import { useWeb3 } from "../hooks/useWeb3";
 import { ProposalsContext } from "../hooks/useProposals";

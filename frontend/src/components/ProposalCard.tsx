@@ -70,9 +70,9 @@ export const ProposalCard = ({ proposal, reload }: any) => {
         try {
             const tx = await proposalManagerContract.cancelProposal(proposal.proposalId);
             await tx.wait();
-
+        } finally {
             reload();
-        } catch (error) {}
+        }
     }
 
     useEffect(() => {

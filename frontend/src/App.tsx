@@ -12,7 +12,6 @@ const getTab = () => new URLSearchParams(window.location.search).get('tab') || '
 
 export const App = () => {
     const [activeTab, setActiveTab] = useState(getTab());
-    const s = new URLSearchParams(window.location.search).get('tab');
     
     useEffect(() => {
         const handlePopState = () => setActiveTab(getTab());

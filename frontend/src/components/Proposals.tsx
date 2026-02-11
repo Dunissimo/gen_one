@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 import { ProposalCard } from "./ProposalCard";
 import { useProposals } from "../hooks/useProposals";
 
