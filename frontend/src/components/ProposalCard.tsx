@@ -119,7 +119,7 @@ export const ProposalCard = ({ proposal, reload }: any) => {
                     <button onClick={handleStartVoting}>Start voting</button>
                 </div>
             )}
-            {!isEnd && !isExecuted && proposal.status === 1n && (
+            {!isExecuted && proposal.status === 1n && (
                 <div className="vote-display">
                     <div><strong>For:</strong> {proposal.votesFor.toString()} <strong>Against:</strong> {proposal.votesAgainst.toString()}</div>
                     {proposal.votesFor > 0 || proposal.votesAgainst > 0 ? (
