@@ -1,10 +1,12 @@
 import { useAlert } from "../hooks/useAlert";
+import { useProposals } from "../hooks/useProposals";
 import { useWeb3 } from "../hooks/useWeb3";
 import { CONFIG, devFastForward, formatAddress } from "../utils";
 
 export const Header = () => {
     const { userAddress, rpcSigner, connectWallet, isConnected, disconnectWallet } = useWeb3();
     const { showAlert } = useAlert();
+    const { reload } = useProposals();
 
     const handleConnect = async () => {
         const success = await connectWallet!();
@@ -15,6 +17,11 @@ export const Header = () => {
         }
     };
     
+    const handleForward = () => {
+        devFastForward(rpcSigner, 604800);
+        reload();
+    }
+
     return (
         <header>
             <div className="container">
@@ -22,7 +29,7 @@ export const Header = () => {
                     <div>
                         <h1>🚀 DAO Venture Fund</h1>
                         <p style={{ color: '#6b7280', fontSize: '14px' }}>Decentralized Governance & Investment</p>
-                        <button onClick={() => devFastForward(rpcSigner, 604800)}>Skip 1 week</button>
+                        <button onClick={handleForward}>Skip 1 week</button>
                     </div>
                     <div style={{ textAlign: 'right' }}>
                         <button className="connect-btn" onClick={handleConnect} disabled={isConnected}>

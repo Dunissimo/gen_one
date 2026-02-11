@@ -3,9 +3,11 @@ import { useState } from "react";
 import { ethers } from "ethers";
 import { useWeb3 } from "../hooks/useWeb3";
 import { useAlert } from "../hooks/useAlert";
+import { useProposals } from "../hooks/useProposals";
 
-export const CreateProposal = ({ isActive }: { isActive: boolean }) => {
+export const CreateProposal = ({ changeTab }: {changeTab: (tabName: string) => void}) => {
     const { signer, governorContract } = useWeb3();
+    const { reload } = useProposals();
     const { showAlert } = useAlert();
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState<any>({
@@ -46,17 +48,17 @@ export const CreateProposal = ({ isActive }: { isActive: boolean }) => {
             showAlert('Proposal created successfully!', 'success');
 
             setFormData({ proposeType: '', targetAddress: '', investAmount: '', description: '' });
-        } catch (error) {
+            changeTab("proposals");
+        } catch (error: any) {
             console.dir(error);
             
             console.error('Error creating proposal:', error);
             showAlert(error.reason, 'error');
         } finally {
+            reload();
             setLoading(false);
         }
     };
-
-    if (!isActive) return null;
 
     return (
         <div id="create" className="tab-content">
@@ -91,8 +93,8 @@ export const CreateProposal = ({ isActive }: { isActive: boolean }) => {
                         <input
                             type="number"
                             name="investAmount"
-                            placeholder="0.5"
-                            step="0.01"
+                            placeholder="1"
+                            step="1"
                             min="0"
                             value={formData.investAmount}
                             onChange={handleChange}

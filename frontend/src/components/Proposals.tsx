@@ -1,55 +1,43 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useState } from "react";
 import { ProposalCard } from "./ProposalCard";
-import { useWeb3 } from "../hooks/useWeb3";
+import { useProposals } from "../hooks/useProposals";
 
 export const Proposals = () => {
-    const { proposalManagerContract } = useWeb3();
-    const [proposals, setProposals] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const loadProposals = async () => {
-            try {
-                setLoading(true);
-
-                if (!proposalManagerContract) {
-                    console.error("NO contract")
-                    return;
-                };
-
-                const proposalIds = await proposalManagerContract.getAllProposalIds();
-
-                const proposalsList = await Promise.all(
-                    proposalIds.map((id: any) => proposalManagerContract.getProposal(id))
-                );
-
-                setProposals(proposalsList);
-            } catch (error) {
-                console.error('Error loading proposals:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        loadProposals();
-    }, [proposalManagerContract]);
+    const { loading, activeProposals, finishedProposals, reload } = useProposals();
 
     return (
         <div id="proposals" className="tab-content">
             <div className="card">
-                <h2>📋 All Proposals</h2>
+                <h2>📋 Active Proposals</h2>
                 {loading ? (
                     <div style={{ textAlign: 'center', padding: '40px 20px', color: '#6b7280' }}>
                         <span className="loading" style={{ margin: '20px auto' }}></span>
                         <p>Loading proposals...</p>
                     </div>
-                ) : proposals.length === 0 ? (
+                ) : activeProposals.length === 0 ? (
                     <div style={{ textAlign: 'center', padding: '40px 20px', color: '#6b7280' }}>No proposals yet</div>
                 ) : (
                     <div className="proposal-list">
-                        {proposals.map(proposal => (
-                            <ProposalCard key={proposal.proposalId} proposal={proposal} />
+                        {activeProposals.map(proposal => (
+                            <ProposalCard key={proposal.proposalId} proposal={proposal} reload={reload} />
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            <div className="card">
+                <h2>📋 Proposals History</h2>
+                {loading ? (
+                    <div style={{ textAlign: 'center', padding: '40px 20px', color: '#6b7280' }}>
+                        <span className="loading" style={{ margin: '20px auto' }}></span>
+                        <p>Loading proposals...</p>
+                    </div>
+                ) : finishedProposals.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '40px 20px', color: '#6b7280' }}>No proposals yet</div>
+                ) : (
+                    <div className="proposal-list">
+                        {finishedProposals.map(proposal => (
+                            <ProposalCard key={proposal.proposalId} proposal={proposal} reload={reload} />
                         ))}
                     </div>
                 )}

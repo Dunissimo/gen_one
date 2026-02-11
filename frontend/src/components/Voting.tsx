@@ -5,7 +5,7 @@ import { ethers } from "ethers";
 import { useAlert } from "../hooks/useAlert";
 import { useWeb3 } from "../hooks/useWeb3";
 
-export const Voting = ({ isActive }: { isActive: boolean }) => {
+export const Voting = () => {
     const { proposalManagerContract, governorContract, rtkTokenContract, signer } = useWeb3();
     const { showAlert } = useAlert();
     const [activeProposals, setActiveProposals] = useState<any[]>([]);
@@ -18,8 +18,6 @@ export const Voting = ({ isActive }: { isActive: boolean }) => {
     const [delegating, setDelegating] = useState(false);
 
     useEffect(() => {
-        if (!isActive) return;
-
         const loadVotingProposals = async () => {
             try {
                 setLoading(true);
@@ -36,7 +34,7 @@ export const Voting = ({ isActive }: { isActive: boolean }) => {
         };
 
         loadVotingProposals();
-    }, [isActive, proposalManagerContract]);
+    }, [proposalManagerContract]);
 
     const castVote = async (proposalId: number, support: any) => {
         if (!signer) {
@@ -95,8 +93,6 @@ export const Voting = ({ isActive }: { isActive: boolean }) => {
             setDelegating(false);
         }
     };
-
-    if (!isActive) return null;
 
     return (
         <div id="voting" className="tab-content">

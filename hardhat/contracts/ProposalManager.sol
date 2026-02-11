@@ -178,12 +178,9 @@ contract ProposalManager {
      */
     function cancelProposal(uint256 proposalId) external {
         Proposal storage proposal = proposals[proposalId];
-        
-        console.log("Proposer: ", proposal.proposer);
-        console.log("Sender: ", msg.sender);
 
         require(proposal.proposer == msg.sender, "Only proposer can cancel");
-        require(proposal.status == ProposalStatus.Pending, "Can only cancel pending");
+        require(proposal.status == ProposalStatus.Pending || proposal.status == ProposalStatus.Active, "Can only cancel pending");
         
         proposal.status = ProposalStatus.Canceled;
         
@@ -204,6 +201,32 @@ contract ProposalManager {
         uint256 count = 0;
         for (uint i = 0; i < proposalIds.length; i++) {
             if (proposals[proposalIds[i]].status == ProposalStatus.Active) {
+                count++;
+            }
+        }
+        
+        uint256[] memory active = new uint256[](count);
+        uint256 index = 0;
+        for (uint i = 0; i < proposalIds.length; i++) {
+            if (proposals[proposalIds[i]].status == ProposalStatus.Active) {
+                active[index++] = proposalIds[i];
+            }
+        }
+        
+        return active;
+    }
+
+    /**
+     * @notice Получить завершенные предложения
+     */
+    function getFinishedProposals() external view returns (uint256[] memory) {
+        uint256 count = 0;
+        for (uint i = 0; i < proposalIds.length; i++) {
+            if (
+                proposals[proposalIds[i]].status == ProposalStatus.Defeated ||
+                proposals[proposalIds[i]].status == ProposalStatus.Succeeded ||
+                proposals[proposalIds[i]].status == ProposalStatus.Executed
+            ) {
                 count++;
             }
         }

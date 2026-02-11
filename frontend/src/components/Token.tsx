@@ -4,7 +4,7 @@ import { ethers } from "ethers";
 import { useWeb3 } from "../hooks/useWeb3";
 import { useAlert } from "../hooks/useAlert";
 
-export const Tokens = ({ isActive }: { isActive: boolean }) => {
+export const Tokens = () => {
     const { rtkTokenContract, signer } = useWeb3();
     const { showAlert } = useAlert();
     const [buyAmount, setBuyAmount] = useState('');
@@ -59,8 +59,6 @@ export const Tokens = ({ isActive }: { isActive: boolean }) => {
             setBuying(false);
         }
     };
-
-    if (!isActive) return null;
 
     return (
         <div id="tokens" className="tab-content">

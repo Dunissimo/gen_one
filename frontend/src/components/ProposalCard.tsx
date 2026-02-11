@@ -4,7 +4,7 @@ import { formatAddress } from "../utils";
 import { useEffect, useState } from "react";
 import { useWeb3 } from "../hooks/useWeb3";
 
-export const ProposalCard = ({ proposal }: any) => {
+export const ProposalCard = ({ proposal, reload }: any) => {
     const typeNames = ['Invest New', 'Invest Existing', 'Add Member', 'Remove Member', 'Manage PROFI', 'Manage RTK'];
     const statusNames = ['Pending', 'Active', 'Canceled', 'Defeated', 'Succeeded', 'Executed'];
     const statusClasses = ['pending', 'active', '', 'defeated', 'succeeded', 'executed'];
@@ -13,17 +13,18 @@ export const ProposalCard = ({ proposal }: any) => {
     const statusName = statusNames[proposal.status] || 'Unknown';
     const statusClass = statusClasses[proposal.status] || '';
 
-    const { signer, rpcSigner, governorContract } = useWeb3();
+    const { signer, rpcSigner, governorContract, proposalManagerContract } = useWeb3();
     const [quorumType, setQuorumType] = useState<string | null>(null);
     const [isEnd, setIsEnd] = useState(false);
     const isExecuted = proposal.status === 4n || proposal.status === 3n; 
 
-    console.log(proposal.status);
-    
-    const handleStartVoting = () => {
+    const handleStartVoting = async () => {
         if (!governorContract || !quorumType) return;
         
-        governorContract?.startVoting(proposal.proposalId, BigInt(quorumType));
+        const tx = await governorContract?.startVoting(proposal.proposalId, BigInt(quorumType));
+        await tx.wait();
+
+        reload();
     }
 
     async function getBlockchainTime(provider: ethers.BrowserProvider | ethers.JsonRpcProvider) {
@@ -32,19 +33,46 @@ export const ProposalCard = ({ proposal }: any) => {
         return BigInt(block!.timestamp);
     }
 
+    const checkProposer = () => proposal.proposer === signer?.address;
+
     const check = () => {
         if (proposal.status !== 0n) return;
-        return proposal.proposer === signer?.address;
+        return checkProposer();
+    }
+
+    const check2 = () => {
+        if (proposal.status === 0n || proposal.status === 1n) {
+            return checkProposer();
+        };
+    }
+
+    const check3 = () => {
+        return proposal.status !== 0n && proposal.status === 1n;
     }
 
     const handleExecute = async () => {
         if (!governorContract) return;
 
-        const tx = await governorContract.finalizeVote(proposal.proposalId);
-        await tx.wait();
+        try {
+            const tx = await governorContract.finalizeVote(proposal.proposalId);
+            await tx.wait();
 
-        const tx2 = await governorContract.executeProposal(proposal.proposalId);
-        await tx2.wait();
+            const tx2 = await governorContract.executeProposal(proposal.proposalId);
+            await tx2.wait();
+        } finally {
+            reload();
+        }
+    }
+
+    const handleCancel = async () => {
+        if (!proposalManagerContract) return;
+
+        try {
+            const tx = await proposalManagerContract.cancelProposal(proposal.proposalId);
+            await tx.wait();
+
+            reload();
+        } catch (error) {}
     }
 
     useEffect(() => {
@@ -53,6 +81,8 @@ export const ProposalCard = ({ proposal }: any) => {
 
             const votingEndTime = proposal.votingEndTime;
             const now = await getBlockchainTime(rpcSigner);
+
+            if (votingEndTime === 0n) return false;
 
             setIsEnd(now >= votingEndTime);
         }
@@ -78,7 +108,7 @@ export const ProposalCard = ({ proposal }: any) => {
                 )}
             </div>
             {check() && (
-                <div style={{display: 'flex', justifyContent: 'space-between'}}>
+                <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '10px'}}>
                     <select onChange={(e) => setQuorumType(e.target.value)} style={{width: 'calc(100% - 130px)'}} defaultValue="default">
                         <option value="default" disabled>Select quorum type</option>
                         <option value="0" disabled={proposal.proposeType === 0n || proposal.proposeType === 1n}>SimpleM</option>
@@ -92,18 +122,23 @@ export const ProposalCard = ({ proposal }: any) => {
             {!isEnd && !isExecuted && proposal.status === 1n && (
                 <div className="vote-display">
                     <div><strong>For:</strong> {proposal.votesFor.toString()} <strong>Against:</strong> {proposal.votesAgainst.toString()}</div>
-                    <div className="vote-bar">
-                        <div className="vote-for" style={{ 
-                            width: `${proposal.votesFor > 0 ? (Number(proposal.votesFor) / (Number(proposal.votesFor) + Number(proposal.votesAgainst)) * 100) : 0}%` 
-                        }}></div>
-                        <div className="vote-against" style={{ 
-                            width: `${proposal.votesAgainst > 0 ? (Number(proposal.votesAgainst) / (Number(proposal.votesFor) + Number(proposal.votesAgainst)) * 100) : 0}%` 
-                        }}></div>
-                    </div>
+                    {proposal.votesFor > 0 || proposal.votesAgainst > 0 ? (
+                        <div className="vote-bar">
+                            <div className="vote-for" style={{ 
+                                width: `${proposal.votesFor > 0 ? (Number(proposal.votesFor) / (Number(proposal.votesFor) + Number(proposal.votesAgainst)) * 100) : 0}%` 
+                            }}></div>
+                            <div className="vote-against" style={{ 
+                                width: `${proposal.votesAgainst > 0 ? (Number(proposal.votesAgainst) / (Number(proposal.votesFor) + Number(proposal.votesAgainst)) * 100) : 0}%` 
+                            }}></div>
+                        </div>
+                    ) : null}
                 </div>
             )}
-            {!check() && isEnd && !isExecuted && (
+            {check3() && isEnd && !isExecuted && (
                 <button onClick={handleExecute}>Execute proposal</button>
+            )}
+            {check2() && !isEnd && (
+                <button className="btn-danger" onClick={handleCancel}>Cancel proposal</button>
             )}
         </div>
     );
