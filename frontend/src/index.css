@@ -95,6 +95,10 @@ h1 {
     border-bottom-color: var(--primary);
 }
 
+.tab-btn:hover {
+    color: #fff;
+}
+
 .card {
     background: white;
     border: 1px solid var(--border);

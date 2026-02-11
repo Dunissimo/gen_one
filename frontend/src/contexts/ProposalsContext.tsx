@@ -27,7 +27,6 @@ export const ProposalsProvider = ({ children }: { children: any }) => {
 
             const proposalIds = await proposalManagerContract.getAllProposalIds();
     
-            
             const proposalsList = await Promise.all(
                 proposalIds.map((id: any) => proposalManagerContract.getProposal(id))
             );
